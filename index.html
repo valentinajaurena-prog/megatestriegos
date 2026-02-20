@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MegaTest Seguridad Almacén</title>
+
+<style>
+body{
+font-family: Arial, sans-serif;
+background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+margin:0;
+padding:0;
+text-align:center;
+}
+
+.container{
+max-width:600px;
+margin:auto;
+padding:20px;
+}
+
+.card{
+background:rgba(255,255,255,0.1);
+padding:20px;
+border-radius:20px;
+margin-top:20px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin:8px 0;
+border:none;
+border-radius:12px;
+font-size:16px;
+cursor:pointer;
+}
+
+.correct{ background:#2ecc71; }
+.wrong{ background:#e74c3c; }
+.option{ background:#3498db; color:white; }
+.option:hover{ opacity:0.8; }
+
+#timer{
+font-size:18px;
+margin-top:10px;
+}
+
+h1{ margin-top:20px; }
+
+.hidden{ display:none; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🔥 MegaTest Seguridad Almacén</h1>
+
+<div id="startScreen" class="card">
+<p>Modo móvil · Juego rápido</p>
+<button onclick="startGame()">Empezar</button>
+</div>
+
+<div id="gameScreen" class="card hidden">
+<h3 id="question"></h3>
+<div id="answers"></div>
+<p id="timer"></p>
+</div>
+
+<div id="endScreen" class="card hidden">
+<h2>Resultado Final</h2>
+<p id="score"></p>
+<button onclick="location.reload()">Repetir</button>
+</div>
+
+</div>
+
+<script>
+
+// ==== PREGUNTAS (puedes ampliar copiando del otro código) ====
+
+const questions = [
+{
+q:"¿Qué ley regula la prevención de riesgos laborales en España?",
+a:["Ley 31/1995 LPRL","Ley 14/1986","RD 485/1997","Ley 50/1999"],
+correct:0
+},
+{
+q:"¿Qué es un EPI?",
+a:["Equipo de Prevención Industrial","Equipo de Protección Individual","Elemento de Protección Interna","Equipo Profesional Industrial"],
+correct:1
+},
+{
+q:"¿Anchura mínima pasillo peatones?",
+a:["0,5 m","1 m","2 m","3 m"],
+correct:1
+},
+{
+q:"¿Peso máximo recomendado hombres?",
+a:["15 kg","25 kg","40 kg","50 kg"],
+correct:1
+},
+{
+q:"¿Color señal obligación?",
+a:["Rojo","Verde","Azul","Amarillo"],
+correct:2
+}
+];
+
+let current = 0;
+let score = 0;
+let timeLeft = 15;
+let timerInterval;
+
+function startGame(){
+document.getElementById("startScreen").classList.add("hidden");
+document.getElementById("gameScreen").classList.remove("hidden");
+questions.sort(()=>Math.random()-0.5);
+loadQuestion();
+}
+
+function loadQuestion(){
+if(current >= questions.length){
+endGame();
+return;
+}
+
+timeLeft = 15;
+startTimer();
+
+let q = questions[current];
+document.getElementById("question").innerText = q.q;
+let answersDiv = document.getElementById("answers");
+answersDiv.innerHTML = "";
+
+q.a.forEach((answer,index)=>{
+let btn = document.createElement("button");
+btn.innerText = answer;
+btn.className="option";
+btn.onclick=()=>checkAnswer(index);
+answersDiv.appendChild(btn);
+});
+}
+
+function checkAnswer(index){
+clearInterval(timerInterval);
+let q = questions[current];
+if(index===q.correct){
+score++;
+}
+current++;
+loadQuestion();
+}
+
+function startTimer(){
+document.getElementById("timer").innerText="Tiempo: "+timeLeft;
+timerInterval=setInterval(()=>{
+timeLeft--;
+document.getElementById("timer").innerText="Tiempo: "+timeLeft;
+if(timeLeft<=0){
+clearInterval(timerInterval);
+current++;
+loadQuestion();
+}
+},1000);
+}
+
+function endGame(){
+document.getElementById("gameScreen").classList.add("hidden");
+document.getElementById("endScreen").classList.remove("hidden");
+document.getElementById("score").innerText="Puntuación: "+score+" / "+questions.length;
+}
+
+</script>
+
+</body>
+</html>
