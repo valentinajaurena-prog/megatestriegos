@@ -1,247 +1,1203 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MegaTest PRL Almacén</title>
-<style>
-body{
-font-family: Arial, sans-serif;
-background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;
-margin:0;
-text-align:center;
-}
+  <meta charset="UTF-8" />
+  <title>Seguridad y PRL en almacén - Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --option-bg: #020617;
+      --option-border: #1f2937;
+      --option-hover: #111827;
+      --correct: #16a34a;
+      --incorrect: #dc2626;
+    }
 
-h1{margin-top:20px;}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
 
-.container{
-padding:20px;
-max-width:600px;
-margin:auto;
-}
+    body {
+      background: radial-gradient(circle at top, #1f2937, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
 
-button{
-padding:12px 20px;
-margin:10px;
-border:none;
-border-radius:10px;
-font-size:16px;
-cursor:pointer;
-background:#00c6ff;
-color:black;
-font-weight:bold;
-}
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(145deg, #020617, #020617);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+      padding: 18px 16px 20px;
+      position: relative;
+      overflow: hidden;
+    }
 
-button:hover{
-background:#00a6d6;
-}
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(34, 197, 94, 0.12), transparent 55%),
+        radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.12), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
 
-.option{
-display:block;
-margin:10px auto;
-padding:12px;
-width:100%;
-max-width:400px;
-border-radius:8px;
-background:white;
-color:black;
-cursor:pointer;
-}
+    .app-inner {
+      position: relative;
+      z-index: 1;
+    }
 
-.correct{background:#4caf50 !important;color:white;}
-.wrong{background:#e53935 !important;color:white;}
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
 
-#timer{font-size:20px;margin:10px;}
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-.hidden{display:none;}
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-input{
-padding:10px;
-border-radius:8px;
-border:none;
-margin-top:10px;
-}
+    .pill {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-.ranking{
-text-align:left;
-background:rgba(255,255,255,0.1);
-padding:10px;
-border-radius:10px;
-margin-top:20px;
-}
-</style>
+    .pill span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(10px);
+    }
+
+    .badge strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      border-radius: inherit;
+      transition: width 0.25s ease-out;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .meta-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .chip-dot.medium {
+      background: #facc15;
+    }
+
+    .chip-dot.hard {
+      background: #f97316;
+    }
+
+    .question-card {
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent 55%),
+        #020617;
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 14px 12px;
+      margin-bottom: 12px;
+      box-shadow:
+        0 12px 30px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+    }
+
+    .question-number {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .question-text {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .topic-tag {
+      font-size: 0.7rem;
+      color: var(--muted);
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .option {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--option-border);
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), #020617);
+      padding: 10px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text);
+      cursor: pointer;
+      transition:
+        background 0.15s ease-out,
+        border-color 0.15s ease-out,
+        transform 0.08s ease-out,
+        box-shadow 0.15s ease-out;
+    }
+
+    .option-label {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+      flex-shrink: 0;
+    }
+
+    .option-text {
+      flex: 1;
+    }
+
+    .option:hover {
+      background: var(--option-hover);
+      border-color: rgba(55, 65, 81, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.9);
+    }
+
+    .option.selected {
+      border-color: var(--accent);
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.18), #020617);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4);
+    }
+
+    .option.correct {
+      border-color: var(--correct);
+      background: radial-gradient(circle at top left, rgba(22, 163, 74, 0.2), #020617);
+    }
+
+    .option.incorrect {
+      border-color: var(--incorrect);
+      background: radial-gradient(circle at top left, rgba(220, 38, 38, 0.2), #020617);
+    }
+
+    .feedback {
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      min-height: 18px;
+    }
+
+    .feedback.correct {
+      color: #4ade80;
+    }
+
+    .feedback.incorrect {
+      color: #f97373;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition:
+        background 0.15s ease-out,
+        transform 0.08s ease-out,
+        box-shadow 0.15s ease-out,
+        opacity 0.15s ease-out;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      color: #022c22;
+      box-shadow:
+        0 10px 25px rgba(34, 197, 94, 0.35),
+        0 0 0 1px rgba(21, 128, 61, 0.7);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow:
+        0 4px 12px rgba(34, 197, 94, 0.35),
+        0 0 0 1px rgba(21, 128, 61, 0.7);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+    }
+
+    .btn-ghost:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.9);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .difficulty-select {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .difficulty-btn {
+      flex: 1;
+      font-size: 0.75rem;
+      padding: 7px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition:
+        background 0.15s ease-out,
+        border-color 0.15s ease-out,
+        color 0.15s ease-out,
+        transform 0.08s ease-out;
+    }
+
+    .difficulty-btn span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .difficulty-btn.medium span.dot {
+      background: #facc15;
+    }
+
+    .difficulty-btn.hard span.dot {
+      background: #f97316;
+    }
+
+    .difficulty-btn.active {
+      border-color: var(--accent);
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .summary-card {
+      text-align: center;
+      padding: 16px 10px 10px;
+    }
+
+    .score-main {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #bbf7d0, #4ade80);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .score-sub {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .score-detail {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+    }
+
+    .score-pill {
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .score-pill strong {
+      color: #e5e7eb;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 400px) {
+      .app {
+        padding: 14px 12px 16px;
+        border-radius: 16px;
+      }
+
+      h1 {
+        font-size: 1rem;
+      }
+
+      .question-text {
+        font-size: 0.9rem;
+      }
+
+      .option {
+        padding: 9px 9px;
+        font-size: 0.85rem;
+      }
+
+      .btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="app">
+    <div class="app-inner">
+      <header>
+        <div class="title-block">
+          <div class="pill">
+            <span class="dot"></span>
+            UF0928 · Seguridad y prevención de riesgos en el almacén
+          </div>
+          <h1>Quiz PRL en almacén</h1>
+        </div>
+        <div class="badge">
+          <span>Modo estudio</span>
+          <span>·</span>
+          <strong>Sin tiempo</strong>
+        </div>
+      </header>
 
-<div class="container">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
 
-<h1>🔥 MegaTest PRL Almacén</h1>
+      <div class="meta-row">
+        <div class="meta-group">
+          <div class="chip">
+            <span id="questionCounter">Pregunta 1 / 10</span>
+          </div>
+          <div class="chip">
+            <span id="difficultyLabel"><span class="chip-dot"></span> Fácil</span>
+          </div>
+        </div>
+        <div class="meta-group">
+          <div class="chip">
+            Aciertos: <strong id="scoreDisplay">0</strong>
+          </div>
+        </div>
+      </div>
 
-<div id="menu">
-<button onclick="startExam()">📘 Modo Examen (20 preguntas)</button>
-<button onclick="startTime()">⏱️ Reto 60 segundos</button>
-<button onclick="showRanking()">🏆 Ranking</button>
-</div>
+      <div class="difficulty-select">
+        <button class="difficulty-btn active" data-diff="facil">
+          <span class="dot"></span>
+          Fácil
+        </button>
+        <button class="difficulty-btn medium" data-diff="media">
+          <span class="dot"></span>
+          Media
+        </button>
+        <button class="difficulty-btn hard" data-diff="dificil">
+          <span class="dot"></span>
+          Difícil
+        </button>
+      </div>
 
-<div id="game" class="hidden">
-<div id="timer"></div>
-<h3 id="question"></h3>
-<div id="options"></div>
-</div>
+      <div id="quizContainer">
+        <div class="question-card">
+          <div class="question-number">
+            <span id="questionIndexLabel">Pregunta 1</span>
+            <span class="topic-tag" id="topicTag">Tema: General</span>
+          </div>
+          <div class="question-text" id="questionText">
+            Cargando pregunta...
+          </div>
+          <div class="options" id="optionsContainer"></div>
+          <div class="feedback" id="feedback"></div>
+          <div class="controls">
+            <button class="btn btn-ghost" id="restartBtn" style="display:none;">
+              Reiniciar
+            </button>
+            <button class="btn btn-primary" id="nextBtn" disabled>
+              Comprobar
+            </button>
+          </div>
+        </div>
+        <p class="hint">
+          Toca una opción para seleccionarla. Ideal para repasar en grupo antes del examen.
+        </p>
+      </div>
+    </div>
+  </div>
 
-<div id="result" class="hidden">
-<h2 id="finalScore"></h2>
-<input type="text" id="playerName" placeholder="Tu nombre">
-<br>
-<button onclick="saveScore()">Guardar puntuación</button>
-<button onclick="backToMenu()">Volver al menú</button>
-</div>
+  <script>
+    // Banco de preguntas (10 fáciles, 10 medias, 10 difíciles)
+    const QUESTIONS = [
+      // FÁCILES
+      {
+        text: "¿Cuál es el objetivo principal de la prevención de riesgos laborales en el almacén?",
+        options: [
+          "Evitar sanciones administrativas",
+          "Eliminar o reducir los riesgos para la salud y seguridad de los trabajadores",
+          "Aumentar la velocidad de trabajo",
+          "Reducir el número de trabajadores"
+        ],
+        correctIndex: 1,
+        difficulty: "facil",
+        topic: "Conceptos básicos PRL"
+      },
+      {
+        text: "¿Qué significa la sigla EPI?",
+        options: [
+          "Equipo de Protección Individual",
+          "Elemento de Protección Industrial",
+          "Equipo de Prevención Interna",
+          "Elemento Personal Interno"
+        ],
+        correctIndex: 0,
+        difficulty: "facil",
+        topic: "EPIs"
+      },
+      {
+        text: "¿Qué color identifica normalmente las señales de obligación (por ejemplo, uso obligatorio de casco)?",
+        options: [
+          "Rojo",
+          "Amarillo",
+          "Azul",
+          "Verde"
+        ],
+        correctIndex: 2,
+        difficulty: "facil",
+        topic: "Señalización"
+      },
+      {
+        text: "¿Cuál de los siguientes es un riesgo típico en un almacén?",
+        options: [
+          "Caídas al mismo nivel",
+          "Radiación ionizante",
+          "Riesgo biológico de laboratorio",
+          "Explosión nuclear"
+        ],
+        correctIndex: 0,
+        difficulty: "facil",
+        topic: "Riesgos generales"
+      },
+      {
+        text: "¿Qué EPI es más adecuado para proteger la cabeza frente a golpes por caída de objetos?",
+        options: [
+          "Gafas de seguridad",
+          "Casco de seguridad",
+          "Guantes de protección",
+          "Calzado de seguridad"
+        ],
+        correctIndex: 1,
+        difficulty: "facil",
+        topic: "EPIs"
+      },
+      {
+        text: "¿Qué documento recoge la identificación y evaluación de riesgos en un centro de trabajo?",
+        options: [
+          "Contrato de trabajo",
+          "Plan de marketing",
+          "Evaluación de riesgos",
+          "Parte de vacaciones"
+        ],
+        correctIndex: 2,
+        difficulty: "facil",
+        topic: "Evaluación de riesgos"
+      },
+      {
+        text: "¿Qué se debe hacer antes de utilizar una carretilla elevadora?",
+        options: [
+          "Comprobar su estado y funcionamiento básico",
+          "Arrancarla directamente",
+          "Cargarla al máximo",
+          "Usarla sin formación previa"
+        ],
+        correctIndex: 0,
+        difficulty: "facil",
+        topic: "Carretillas"
+      },
+      {
+        text: "¿Qué tipo de calzado es recomendable en un almacén?",
+        options: [
+          "Chanclas",
+          "Zapatos de tacón",
+          "Calzado de seguridad con puntera reforzada",
+          "Zapatillas de casa"
+        ],
+        correctIndex: 2,
+        difficulty: "facil",
+        topic: "EPIs"
+      },
+      {
+        text: "¿Qué se debe hacer si se detecta una situación de riesgo grave e inminente?",
+        options: [
+          "Ignorarla",
+          "Continuar trabajando con cuidado",
+          "Informar de inmediato y, si es necesario, abandonar la zona",
+          "Esperar al final de la jornada"
+        ],
+        correctIndex: 2,
+        difficulty: "facil",
+        topic: "Emergencias"
+      },
+      {
+        text: "¿Cuál de estas acciones ayuda a mantener el orden y la limpieza en el almacén?",
+        options: [
+          "Dejar los embalajes en el suelo",
+          "Mantener los pasillos despejados",
+          "Acumular residuos en cualquier zona",
+          "Almacenar productos en el suelo de los pasillos"
+        ],
+        correctIndex: 1,
+        difficulty: "facil",
+        topic: "Orden y limpieza"
+      },
 
-<div id="ranking" class="hidden">
-<h2>🏆 Ranking</h2>
-<div class="ranking" id="rankingList"></div>
-<button onclick="backToMenu()">Volver</button>
-</div>
+      // MEDIAS
+      {
+        text: "¿Qué se entiende por 'riesgo laboral'?",
+        options: [
+          "Cualquier situación molesta en el trabajo",
+          "La posibilidad de que un trabajador sufra un daño derivado del trabajo",
+          "Un conflicto entre compañeros",
+          "Una sanción económica a la empresa"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Conceptos PRL"
+      },
+      {
+        text: "¿Cuál es la postura más adecuada para levantar una carga manualmente?",
+        options: [
+          "Espalda curvada y piernas estiradas",
+          "Espalda recta y flexionando las rodillas",
+          "Girar el tronco mientras se levanta",
+          "Levantar solo con la fuerza de la espalda"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Manipulación de cargas"
+      },
+      {
+        text: "¿Qué medida preventiva es adecuada para evitar caídas al mismo nivel?",
+        options: [
+          "Incrementar la iluminación sin más",
+          "Usar tapones auditivos",
+          "Mantener el suelo limpio y sin obstáculos",
+          "Aumentar la velocidad de trabajo"
+        ],
+        correctIndex: 2,
+        difficulty: "media",
+        topic: "Riesgos en el almacén"
+      },
+      {
+        text: "En la señalización de seguridad, ¿qué indican normalmente las señales de color rojo?",
+        options: [
+          "Obligación",
+          "Prohibición o equipos de lucha contra incendios",
+          "Información general",
+          "Vías de evacuación"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Señalización"
+      },
+      {
+        text: "¿Cuál de las siguientes es una medida ergonómica en el almacén?",
+        options: [
+          "Colocar las cargas pesadas a la altura de la cabeza",
+          "Diseñar los puestos para reducir posturas forzadas",
+          "Aumentar el peso de las cargas",
+          "Evitar las pausas durante la jornada"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Ergonomía"
+      },
+      {
+        text: "¿Qué debe hacerse con los productos químicos almacenados?",
+        options: [
+          "Mezclarlos para ahorrar espacio",
+          "Almacenarlos según su compatibilidad y etiquetado",
+          "Guardarlos sin etiquetar",
+          "Colocarlos en cualquier estantería libre"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Productos peligrosos"
+      },
+      {
+        text: "¿Qué es un plan de emergencia?",
+        options: [
+          "Un documento de vacaciones",
+          "Un conjunto de medidas organizativas y técnicas para actuar ante situaciones de emergencia",
+          "Un listado de sanciones",
+          "Un inventario de productos"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Emergencias"
+      },
+      {
+        text: "¿Qué trabajador puede manejar una carretilla elevadora?",
+        options: [
+          "Cualquier trabajador con contrato indefinido",
+          "Solo quien tenga formación específica y autorización",
+          "Cualquier trabajador mayor de edad",
+          "El trabajador más antiguo"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Carretillas"
+      },
+      {
+        text: "¿Qué se debe hacer con una estantería que presenta daños visibles?",
+        options: [
+          "Seguir utilizándola hasta que se rompa",
+          "Repararla o sustituirla y no usarla hasta que sea segura",
+          "Cargarla menos pero seguir usándola",
+          "Ignorar los daños si son pequeños"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Almacenamiento"
+      },
+      {
+        text: "¿Qué documento suele recoger las normas internas de seguridad en el almacén?",
+        options: [
+          "Manual de acogida",
+          "Reglamento interno de seguridad o instrucciones de trabajo",
+          "Contrato mercantil",
+          "Factura de proveedor"
+        ],
+        correctIndex: 1,
+        difficulty: "media",
+        topic: "Organización PRL"
+      },
 
-</div>
+      // DIFÍCILES
+      {
+        text: "En la evaluación de riesgos, ¿qué tres elementos se analizan habitualmente para cada riesgo?",
+        options: [
+          "Probabilidad, gravedad y número de trabajadores expuestos",
+          "Edad, antigüedad y salario",
+          "Turno, horario y vacaciones",
+          "Color, tamaño y peso"
+        ],
+        correctIndex: 0,
+        difficulty: "dificil",
+        topic: "Evaluación de riesgos"
+      },
+      {
+        text: "¿Cuál de las siguientes situaciones puede considerarse un riesgo ergonómico en el almacén?",
+        options: [
+          "Uso de casco de seguridad",
+          "Movimientos repetitivos y posturas forzadas al preparar pedidos",
+          "Señalización de salidas de emergencia",
+          "Uso de chaleco reflectante"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Ergonomía"
+      },
+      {
+        text: "En la manipulación manual de cargas, ¿qué combinación de factores aumenta especialmente el riesgo de lesión?",
+        options: [
+          "Cargas ligeras, agarre fácil y postura neutra",
+          "Cargas pesadas, agarre difícil y giro del tronco",
+          "Cargas ligeras y pausas frecuentes",
+          "Cargas medianas y buena organización"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Manipulación de cargas"
+      },
+      {
+        text: "En un plan de emergencia, ¿qué elemento es fundamental para garantizar una evacuación eficaz?",
+        options: [
+          "Tener un inventario actualizado",
+          "Disponer de vías de evacuación señalizadas y libres de obstáculos",
+          "Aumentar la producción",
+          "Reducir el número de extintores"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Emergencias"
+      },
+      {
+        text: "Respecto al almacenamiento en altura, ¿qué medida es correcta?",
+        options: [
+          "Colocar las cargas más pesadas en los niveles superiores",
+          "Respetar la carga máxima de las estanterías indicada por el fabricante",
+          "Permitir que los trabajadores se suban a las estanterías",
+          "Almacenar sin tener en cuenta la estabilidad"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Almacenamiento"
+      },
+      {
+        text: "En la gestión de productos peligrosos, ¿qué información es imprescindible en el etiquetado?",
+        options: [
+          "Solo el nombre comercial",
+          "Nombre del trabajador responsable",
+          "Pictogramas de peligro, indicaciones de riesgo y consejos de prudencia",
+          "Precio de compra"
+        ],
+        correctIndex: 2,
+        difficulty: "dificil",
+        topic: "Productos peligrosos"
+      },
+      {
+        text: "¿Qué acción es adecuada para reducir el riesgo de atropello por carretillas en el almacén?",
+        options: [
+          "Permitir el paso de peatones por cualquier zona",
+          "Delimitar y señalizar claramente las zonas peatonales y de circulación de carretillas",
+          "Aumentar la velocidad de las carretillas",
+          "Eliminar la señalización horizontal"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Carretillas"
+      },
+      {
+        text: "En la investigación de un accidente, ¿qué objetivo principal se persigue?",
+        options: [
+          "Buscar culpables",
+          "Determinar las causas para evitar que vuelva a ocurrir",
+          "Reducir el parte de baja",
+          "Negociar con la mutua"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Investigación de accidentes"
+      },
+      {
+        text: "¿Qué se entiende por 'medida colectiva de protección' en el almacén?",
+        options: [
+          "Un EPI para cada trabajador",
+          "Una medida que protege simultáneamente a varios trabajadores, como barandillas o resguardos",
+          "Un curso individual de formación",
+          "Un reconocimiento médico"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Medidas preventivas"
+      },
+      {
+        text: "En relación con la carga mental en tareas de almacén, ¿qué situación puede incrementarla?",
+        options: [
+          "Pausas adecuadas y buena planificación",
+          "Exceso de presión de tiempo y cambios constantes de prioridad",
+          "Formación suficiente y clara",
+          "Buena comunicación con el equipo"
+        ],
+        correctIndex: 1,
+        difficulty: "dificil",
+        topic: "Carga mental"
+      }
+    ];
 
-<script>
+    const TOTAL_QUESTIONS_PER_RUN = 10;
 
-// ==== BASE DE DATOS DE PREGUNTAS ====
-// Aquí puedes pegar las 200+ preguntas
-const questions = [
-{q:"¿Qué es un EPI?",a:["Equipo Personal Individual","Equipo de Protección Individual","Elemento Preventivo Interno"],correct:1},
-{q:"Altura máxima segura sin protección colectiva:",a:["2 metros","1 metro","5 metros"],correct:0},
-{q:"El almacenamiento APQ significa:",a:["Almacenamiento Productos Químicos","Archivo Preventivo","Área Protección Calidad"],correct:0},
-];
+    let currentDifficulty = "facil";
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let selectedOptionIndex = null;
+    let answered = false;
 
-// Para simular muchas:
-for(let i=0;i<200;i++){
-questions.push({
-q:"Pregunta simulada nº "+(i+1),
-a:["Opción A","Opción B","Opción C"],
-correct:Math.floor(Math.random()*3)
-});
-}
+    const progressFill = document.getElementById("progressFill");
+    const questionCounter = document.getElementById("questionCounter");
+    const difficultyLabel = document.getElementById("difficultyLabel");
+    const questionIndexLabel = document.getElementById("questionIndexLabel");
+    const topicTag = document.getElementById("topicTag");
+    const questionText = document.getElementById("questionText");
+    const optionsContainer = document.getElementById("optionsContainer");
+    const feedback = document.getElementById("feedback");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    const quizContainer = document.getElementById("quizContainer");
+    const difficultyButtons = document.querySelectorAll(".difficulty-btn");
 
-let current=0;
-let score=0;
-let totalQuestions=20;
-let timerInterval;
-let timeLeft=60;
-let mode="exam";
-let selectedQuestions=[];
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
 
-function shuffle(array){
-return array.sort(()=>Math.random()-0.5);
-}
+    function pickQuestionsByDifficulty(difficulty) {
+      const filtered = QUESTIONS.filter(q => q.difficulty === difficulty);
+      const shuffled = shuffle(filtered);
+      return shuffled.slice(0, TOTAL_QUESTIONS_PER_RUN);
+    }
 
-function startExam(){
-mode="exam";
-totalQuestions=20;
-selectedQuestions=shuffle([...questions]).slice(0,totalQuestions);
-startGame();
-}
+    function updateDifficultyLabel() {
+      let labelText = "";
+      let dotClass = "chip-dot";
 
-function startTime(){
-mode="time";
-timeLeft=60;
-score=0;
-selectedQuestions=shuffle([...questions]);
-startGame();
-startTimer();
-}
+      if (currentDifficulty === "facil") {
+        labelText = "Fácil";
+      } else if (currentDifficulty === "media") {
+        labelText = "Media";
+        dotClass += " medium";
+      } else {
+        labelText = "Difícil";
+        dotClass += " hard";
+      }
 
-function startGame(){
-document.getElementById("menu").classList.add("hidden");
-document.getElementById("result").classList.add("hidden");
-document.getElementById("ranking").classList.add("hidden");
-document.getElementById("game").classList.remove("hidden");
-current=0;
-score=0;
-showQuestion();
-}
+      difficultyLabel.innerHTML = `<span class="${dotClass}"></span> ${labelText}`;
+    }
 
-function showQuestion(){
-if(mode==="exam" && current>=totalQuestions){
-endGame();
-return;
-}
-if(mode==="time" && timeLeft<=0){
-endGame();
-return;
-}
+    function renderQuestion() {
+      const q = currentQuestions[currentIndex];
+      if (!q) return;
 
-let q=selectedQuestions[current];
-document.getElementById("question").innerText=q.q;
-let optionsDiv=document.getElementById("options");
-optionsDiv.innerHTML="";
+      const questionNumber = currentIndex + 1;
+      questionIndexLabel.textContent = `Pregunta ${questionNumber}`;
+      questionCounter.textContent = `Pregunta ${questionNumber} / ${currentQuestions.length}`;
+      questionText.textContent = q.text;
+      topicTag.textContent = `Tema: ${q.topic}`;
+      scoreDisplay.textContent = score;
 
-q.a.forEach((opt,i)=>{
-let btn=document.createElement("button");
-btn.innerText=opt;
-btn.className="option";
-btn.onclick=()=>checkAnswer(i);
-optionsDiv.appendChild(btn);
-});
-}
+      const progressPercent = ((questionNumber - 1) / currentQuestions.length) * 100;
+      progressFill.style.width = `${progressPercent}%`;
 
-function checkAnswer(index){
-let correct=selectedQuestions[current].correct;
-if(index===correct) score++;
-current++;
-showQuestion();
-}
+      optionsContainer.innerHTML = "";
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      selectedOptionIndex = null;
+      answered = false;
+      nextBtn.disabled = true;
+      nextBtn.textContent = "Comprobar";
+      restartBtn.style.display = "none";
 
-function startTimer(){
-document.getElementById("timer").innerText="⏳ 60s";
-timerInterval=setInterval(()=>{
-timeLeft--;
-document.getElementById("timer").innerText="⏳ "+timeLeft+"s";
-if(timeLeft<=0){
-clearInterval(timerInterval);
-endGame();
-}
-},1000);
-}
+      q.options.forEach((opt, index) => {
+        const optionEl = document.createElement("button");
+        optionEl.className = "option";
+        optionEl.dataset.index = index;
 
-function endGame(){
-clearInterval(timerInterval);
-document.getElementById("game").classList.add("hidden");
-document.getElementById("result").classList.remove("hidden");
-document.getElementById("finalScore").innerText="Puntuación: "+score;
-}
+        const labelEl = document.createElement("div");
+        labelEl.className = "option-label";
+        labelEl.textContent = String.fromCharCode(65 + index);
 
-function saveScore(){
-let name=document.getElementById("playerName").value;
-if(!name) return;
-let ranking=JSON.parse(localStorage.getItem("ranking"))||[];
-ranking.push({name,score});
-ranking.sort((a,b)=>b.score-a.score);
-ranking=ranking.slice(0,10);
-localStorage.setItem("ranking",JSON.stringify(ranking));
-backToMenu();
-}
+        const textEl = document.createElement("div");
+        textEl.className = "option-text";
+        textEl.textContent = opt;
 
-function showRanking(){
-document.getElementById("menu").classList.add("hidden");
-document.getElementById("ranking").classList.remove("hidden");
-let ranking=JSON.parse(localStorage.getItem("ranking"))||[];
-let list="";
-ranking.forEach((r,i)=>{
-list+= (i+1)+". "+r.name+" - "+r.score+"<br>";
-});
-document.getElementById("rankingList").innerHTML=list||"Sin puntuaciones aún.";
-}
+        optionEl.appendChild(labelEl);
+        optionEl.appendChild(textEl);
 
-function backToMenu(){
-document.getElementById("menu").classList.remove("hidden");
-document.getElementById("game").classList.add("hidden");
-document.getElementById("result").classList.add("hidden");
-document.getElementById("ranking").classList.add("hidden");
-}
+        optionEl.addEventListener("click", () => {
+          if (answered) return;
+          selectedOptionIndex = index;
+          document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+          optionEl.classList.add("selected");
+          nextBtn.disabled = false;
+        });
 
-</script>
+        optionsContainer.appendChild(optionEl);
+      });
+    }
+
+    function showSummary() {
+      const total = currentQuestions.length;
+      const percent = Math.round((score / total) * 100);
+
+      let message = "";
+      if (percent === 100) {
+        message = "¡Perfecto! Nivel examen.";
+      } else if (percent >= 80) {
+        message = "Muy buen nivel, solo afinar detalles.";
+      } else if (percent >= 60) {
+        message = "Vas bien, repasa los fallos.";
+      } else {
+        message = "Toca repasar más el temario, pero vas en camino.";
+      }
+
+      quizContainer.innerHTML = `
+        <div class="question-card summary-card">
+          <div class="score-main">${percent}%</div>
+          <div class="score-sub">${score} aciertos de ${total} preguntas</div>
+          <div class="score-detail">
+            <div class="score-pill"><strong>Dificultad:</strong> ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}</div>
+            <div class="score-pill"><strong>Modo:</strong> Estudio sin tiempo</div>
+          </div>
+          <p class="hint">${message}</p>
+          <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+            <button class="btn btn-ghost" id="changeDiffBtn">Cambiar dificultad</button>
+            <button class="btn btn-primary" id="playAgainBtn">Volver a jugar</button>
+          </div>
+          <p class="hint">Consejo: jugad varias rondas cambiando la dificultad para simular el examen.</p>
+        </div>
+      `;
+
+      const changeDiffBtn = document.getElementById("changeDiffBtn");
+      const playAgainBtn = document.getElementById("playAgainBtn");
+
+      changeDiffBtn.addEventListener("click", () => {
+        // Solo resetea y deja que elijas otra dificultad
+        resetGame();
+      });
+
+      playAgainBtn.addEventListener("click", () => {
+        startGame();
+      });
+    }
+
+    function checkAnswer() {
+      if (answered || selectedOptionIndex === null) return;
+
+      answered = true;
+      const q = currentQuestions[currentIndex];
+      const options = document.querySelectorAll(".option");
+
+      options.forEach((optEl) => {
+        const idx = parseInt(optEl.dataset.index, 10);
+        if (idx === q.correctIndex) {
+          optEl.classList.add("correct");
+        }
+        if (idx === selectedOptionIndex && idx !== q.correctIndex) {
+          optEl.classList.add("incorrect");
+        }
+      });
+
+      if (selectedOptionIndex === q.correctIndex) {
+        score++;
+        feedback.textContent = "¡Correcto!";
+        feedback.classList.add("correct");
+      } else {
+        feedback.textContent = `Incorrecto. La respuesta correcta era la opción ${String.fromCharCode(65 + q.correctIndex)}.`;
+        feedback.classList.add("incorrect");
+      }
+
+      scoreDisplay.textContent = score;
+      nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? "Ver resultados" : "Siguiente";
+    }
+
+    function handleNext() {
+      if (!answered) {
+        checkAnswer();
+        return;
+      }
+
+      if (currentIndex < currentQuestions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        progressFill.style.width = "100%";
+        showSummary();
+      }
+    }
+
+    function resetGame() {
+      score = 0;
+      currentIndex = 0;
+      scoreDisplay.textContent = score;
+      progressFill.style.width = "0%";
+      quizContainer.innerHTML = `
+        <div class="question-card">
+          <div class="question-number">
+            <span id="questionIndexLabel">Pregunta 1</span>
+            <span class="topic-tag" id="topicTag">Tema: General</span>
+          </div>
+          <div class="question-text" id="questionText">
+            Pulsa una dificultad y luego responde a las preguntas.
+          </div>
+          <div class="options" id="optionsContainer"></div>
+          <div class="feedback" id="feedback"></div>
+          <div class="controls">
+            <button class="btn btn-ghost" id="restartBtn" style="display:none;">
+              Reiniciar
+            </button>
+            <button class="btn btn-primary" id="nextBtn" disabled>
+              Comprobar
+            </button>
+          </div>
+        </div>
+        <p class="hint">
+          Elige dificultad (Fácil, Media o Difícil) y juega varias rondas para fijar el temario.
+        </p>
+      `;
+
+      // Reasignar referencias dentro del contenedor
+      questionIndexLabel = document.getElementById("questionIndexLabel");
+      topicTag = document.getElementById("topicTag");
+      questionText = document.getElementById("questionText");
+      optionsContainer = document.getElementById("optionsContainer");
+      feedback = document.getElementById("feedback");
+      nextBtn = document.getElementById("nextBtn");
+      restartBtn = document.getElementById("restartBtn");
+
+      nextBtn.addEventListener("click", handleNext);
+    }
+
+    function startGame() {
+      score = 0;
+      currentIndex = 0;
+      scoreDisplay.textContent = score;
+      currentQuestions = pickQuestionsByDifficulty(currentDifficulty);
+      renderQuestion();
+    }
+
+    // Eventos
+    nextBtn.addEventListener("click", handleNext);
+
+    difficultyButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        difficultyButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentDifficulty = btn.dataset.diff;
+        updateDifficultyLabel();
+        startGame();
+      });
+    });
+
+    // Inicio
+    currentQuestions = pickQuestionsByDifficulty(currentDifficulty);
+    updateDifficultyLabel();
+    renderQuestion();
+  </script>
 </body>
 </html>
