@@ -1,247 +1,1357 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MegaTest PRL Almacén</title>
-<style>
-body{
-font-family: Arial, sans-serif;
-background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;
-margin:0;
-text-align:center;
-}
+import { useState, useEffect, useRef, useCallback } from "react";
 
-h1{margin-top:20px;}
+// ─── 200 QUESTIONS DATABASE ────────────────────────────────────────────────────
+const ALL_QUESTIONS = [
+  // ══════════════ BLOQUE 1: CONCEPTOS GENERALES DE SEGURIDAD ══════════════
+  { id:1, block:"Conceptos Generales", difficulty:"fácil",
+    q:"¿Qué define la seguridad laboral en el almacén?",
+    opts:["Solo el uso obligatorio de EPIs","El conjunto de técnicas para eliminar o minimizar riesgos que puedan provocar accidentes","La normativa de horarios de trabajo","El control de inventario"],
+    a:1, exp:"La seguridad laboral engloba todas las técnicas, procedimientos y medidas destinados a prevenir accidentes y enfermedades profesionales, no solo el uso de EPIs." },
+  { id:2, block:"Conceptos Generales", difficulty:"fácil",
+    q:"¿Qué diferencia hay entre accidente de trabajo e incidente?",
+    opts:["No hay diferencia, son sinónimos","El accidente causa daño; el incidente es un suceso no deseado SIN daño pero con potencial de causarlo","El incidente es más grave que el accidente","El accidente es solo de tráfico"],
+    a:1, exp:"El incidente (o 'casi accidente') es un aviso de peligro sin daño real. Estudiar los incidentes es crucial para prevenir futuros accidentes." },
+  { id:3, block:"Conceptos Generales", difficulty:"medio",
+    q:"¿Cuál es la jerarquía correcta de medidas preventivas según la LPRL?",
+    opts:["EPIs → Protección colectiva → Eliminar el riesgo","Eliminar el riesgo → Sustituir → Protección colectiva → EPIs → Información","Formación → EPIs → Señalización","Señalización → EPIs → Evacuación"],
+    a:1, exp:"La Ley de Prevención de Riesgos Laborales establece una jerarquía: primero ELIMINAR el riesgo en origen, luego sustituir, después protección colectiva, y como último recurso los EPIs." },
+  { id:4, block:"Conceptos Generales", difficulty:"fácil",
+    q:"¿Qué ley regula la prevención de riesgos laborales en España?",
+    opts:["Ley 31/1995 LPRL","Ley Orgánica 5/2000","Real Decreto 379/2001","Ley 14/1986 General de Sanidad"],
+    a:0, exp:"La Ley 31/1995 de Prevención de Riesgos Laborales (LPRL) es la norma básica en España que regula las obligaciones de empresarios y trabajadores en materia de seguridad laboral." },
+  { id:5, block:"Conceptos Generales", difficulty:"medio",
+    q:"¿Quién tiene la obligación principal de garantizar la seguridad en el almacén?",
+    opts:["Solo el trabajador","Solo el delegado de prevención","El empresario, aunque los trabajadores también tienen obligaciones","Solo el servicio de prevención ajeno"],
+    a:2, exp:"El empresario tiene la obligación principal (deber de protección), pero los trabajadores también tienen obligaciones: usar correctamente EPIs, comunicar riesgos, etc." },
+  { id:6, block:"Conceptos Generales", difficulty:"difícil",
+    q:"¿Qué es el 'índice de frecuencia' de accidentes?",
+    opts:["El número total de accidentes al año","Número de accidentes x 1.000.000 / horas trabajadas","Días perdidos por accidente / total trabajadores","Porcentaje de trabajadores accidentados"],
+    a:1, exp:"El índice de frecuencia (IF) = (Nº accidentes × 1.000.000) / Horas trabajadas. Permite comparar la siniestralidad entre empresas de diferente tamaño." },
+  { id:7, block:"Conceptos Generales", difficulty:"medio",
+    q:"¿Qué es la 'enfermedad profesional' a diferencia del accidente de trabajo?",
+    opts:["Es lo mismo que un accidente de trabajo","Se contrae a consecuencia del trabajo habitual, de forma lenta y progresiva, estando en el listado oficial","Cualquier enfermedad que sufre un trabajador","Solo la producida por productos químicos"],
+    a:1, exp:"La enfermedad profesional se contrae lentamente por la exposición repetida a agentes del trabajo (ruido, químicos, posturas). Debe estar en el listado del RD 1299/2006." },
+  { id:8, block:"Conceptos Generales", difficulty:"fácil",
+    q:"¿Qué significa 'cultura preventiva' en una empresa?",
+    opts:["Tener contratado un servicio de prevención","La integración de la prevención en todas las decisiones y niveles de la empresa","Hacer cursos de seguridad una vez al año","Tener el plan de emergencia colgado en la pared"],
+    a:1, exp:"La cultura preventiva implica que la seguridad forma parte del ADN de la empresa: todas las decisiones (diseño, compras, RRHH) contemplan la prevención de riesgos." },
 
-.container{
-padding:20px;
-max-width:600px;
-margin:auto;
-}
+  // ══════════════ BLOQUE 2: TÉCNICAS DE SEGURIDAD ══════════════
+  { id:9, block:"Técnicas de Seguridad", difficulty:"fácil",
+    q:"¿Qué es la seguridad PREVENTIVA?",
+    opts:["La que actúa DESPUÉS del accidente para reducir daños","La que actúa ANTES del accidente para eliminarlo o reducirlo","La que usa solo EPIs","La que solo contempla incendios"],
+    a:1, exp:"La seguridad preventiva actúa en el ORIGEN del riesgo, antes de que ocurra el accidente. Es la más eficaz y prioritaria según la jerarquía de medidas." },
+  { id:10, block:"Técnicas de Seguridad", difficulty:"fácil",
+    q:"¿Cuál de estos es un ejemplo de PROTECCIÓN COLECTIVA?",
+    opts:["Casco de seguridad","Barandilla en muelle de carga","Guantes de manipulación","Arnés anticaída"],
+    a:1, exp:"La protección colectiva protege a TODOS los trabajadores sin necesitar equiparse individualmente. Las barandillas, redes, cubiertas de huecos son ejemplos clave." },
+  { id:11, block:"Técnicas de Seguridad", difficulty:"medio",
+    q:"¿Por qué se prefiere la protección colectiva a los EPIs?",
+    opts:["Porque los EPIs son más caros","Porque la protección colectiva no requiere la cooperación del trabajador y protege a todos","Porque los EPIs son menos efectivos","No se prefiere, los EPIs son siempre la primera opción"],
+    a:1, exp:"La protección colectiva es preferible porque actúa independientemente del comportamiento del trabajador. Los EPIs dependen de su uso correcto y constante." },
+  { id:12, block:"Técnicas de Seguridad", difficulty:"medio",
+    q:"¿Qué técnica analiza sistemáticamente los puestos de trabajo para identificar riesgos?",
+    opts:["Inspección de seguridad","Análisis estadístico de accidentes","Investigación de accidentes","Observación del trabajo"],
+    a:0, exp:"La inspección de seguridad es la técnica analítica que examina sistemáticamente los puestos, instalaciones y procesos para detectar situaciones peligrosas antes de que causen daño." },
+  { id:13, block:"Técnicas de Seguridad", difficulty:"difícil",
+    q:"¿Qué es el método FINE para evaluación de riesgos?",
+    opts:["Un método de extinción de incendios","Un método que valora el riesgo = Consecuencias × Exposición × Probabilidad","Un sistema de señalización de emergencias","Un protocolo de primeros auxilios"],
+    a:1, exp:"El método FINE calcula el Grado de Peligrosidad (GP) = Consecuencias × Exposición × Probabilidad. Permite priorizar las intervenciones según el nivel de riesgo." },
+  { id:14, block:"Técnicas de Seguridad", difficulty:"medio",
+    q:"¿Qué debe incluir la investigación de un accidente de trabajo?",
+    opts:["Solo la descripción del daño causado","El análisis de las causas para evitar que se repita","Solo el parte de baja médica","Solo los datos del trabajador accidentado"],
+    a:1, exp:"La investigación de accidentes busca las CAUSAS reales (no culpables) para implementar medidas correctoras. Debe analizar causas directas, básicas y raíz." },
+  { id:15, block:"Técnicas de Seguridad", difficulty:"fácil",
+    q:"¿Qué es el 'orden y limpieza' como medida de seguridad (metodología 5S)?",
+    opts:["Una norma estética sin impacto en seguridad","Una metodología que reduce accidentes al eliminar obstáculos, derrames y desorden","Solo obligatorio en almacenes de alimentos","Una normativa solo para almacenes mayores de 500 m²"],
+    a:1, exp:"El orden y limpieza (metodología 5S japonesa) es una de las medidas más efectivas: elimina tropiezos, facilita evacuaciones, previene incendios y mejora la eficiencia." },
 
-button{
-padding:12px 20px;
-margin:10px;
-border:none;
-border-radius:10px;
-font-size:16px;
-cursor:pointer;
-background:#00c6ff;
-color:black;
-font-weight:bold;
-}
+  // ══════════════ BLOQUE 3: EQUIPOS DE PROTECCIÓN INDIVIDUAL ══════════════
+  { id:16, block:"EPIs", difficulty:"fácil",
+    q:"¿Qué significa EPI?",
+    opts:["Equipo de Prevención de Incendios","Equipo de Protección Individual","Estándar de Protección Industrial","Equipo de Primeros Intervencion"],
+    a:1, exp:"EPI = Equipo de Protección Individual. Son dispositivos destinados a ser llevados por el trabajador para protegerle de uno o varios riesgos. Regulados por el RD 773/1997." },
+  { id:17, block:"EPIs", difficulty:"fácil",
+    q:"¿Cuándo debe usar EPIs un trabajador del almacén?",
+    opts:["Solo cuando él lo decida","Solo en caso de inspección de trabajo","Siempre que el riesgo no pueda eliminarse con medidas colectivas","Solo cuando lo indique el jefe directo"],
+    a:2, exp:"Los EPIs son obligatorios cuando los riesgos no se pueden eliminar o controlar suficientemente con medidas de protección colectiva. Su uso es obligatorio por ley." },
+  { id:18, block:"EPIs", difficulty:"medio",
+    q:"¿Qué EPI protege frente a objetos que caen sobre la cabeza?",
+    opts:["Gafas de seguridad","Casco de seguridad clase E","Protector auditivo","Pantalla facial"],
+    a:1, exp:"El casco de seguridad clase E (energía) protege frente a impactos de objetos que caen. Es obligatorio en zonas de estanterías altas, trabajo con carretillas y muelles de carga." },
+  { id:19, block:"EPIs", difficulty:"medio",
+    q:"¿Qué protección auditiva se usa cuando el nivel de ruido supera los 85 dB?",
+    opts:["No es necesaria ninguna protección hasta 100 dB","Tapones auditivos y/o auriculares de seguridad","Solo señalización de zona ruidosa","Cascos de comunicación"],
+    a:1, exp:"A partir de 85 dB(A) es obligatorio proporcionar protección auditiva. Los tapones de espuma o los auriculares de copa son los más comunes en almacenes con maquinaria." },
+  { id:20, block:"EPIs", difficulty:"fácil",
+    q:"¿Qué característica DEBE tener el calzado de seguridad en un almacén?",
+    opts:["Solo debe ser antideslizante","Punta de acero (200 J de resistencia) y suela resistente a la perforación","Solo debe ser cómodo","Cualquier calzado cerrado es válido"],
+    a:1, exp:"El calzado de seguridad para almacén debe tener puntera metálica resistente a 200 J y suela antiperforación. Se clasifica por categorías (S1, S1P, S2, S3) según prestaciones." },
+  { id:21, block:"EPIs", difficulty:"medio",
+    q:"¿Qué tipo de guantes se usan para manipulación de cargas con riesgo de corte?",
+    opts:["Guantes de látex de cirujano","Guantes anticorte nivel 3-5 según norma EN388","Guantes de algodón","Guantes de goma para limpieza"],
+    a:1, exp:"Los guantes anticorte se clasifican según EN388. Para almacén con manipulación de cajas/palets con cantos cortantes se requieren guantes de nivel 3 o superior." },
+  { id:22, block:"EPIs", difficulty:"difícil",
+    q:"¿Cuál es la obligación del EMPRESARIO respecto a los EPIs?",
+    opts:["Solo proporcionarlos","Proporcionar, mantener, reponer, formar en su uso y vigilar que se usan correctamente","Solo informar de su existencia","Compartirlos entre trabajadores para ahorrar costes"],
+    a:1, exp:"El empresario debe: proporcionar EPIs gratuitos, asegurarse de su idoneidad, mantenerlos en buen estado, reponer los deteriorados, formar en su uso correcto y vigilar su utilización." },
+  { id:23, block:"EPIs", difficulty:"fácil",
+    q:"¿El chaleco reflectante es un EPI obligatorio en almacenes con tráfico de carretillas?",
+    opts:["No, es opcional","Sí, para garantizar la visibilidad del peatón ante los operadores de carretilla","Solo de noche","Solo en almacenes al aire libre"],
+    a:1, exp:"El chaleco reflectante (alta visibilidad) es obligatorio en zonas con tráfico de carretillas para que el operador pueda detectar al peatón a tiempo y evitar atropellos." },
+  { id:24, block:"EPIs", difficulty:"medio",
+    q:"¿Cuándo es obligatorio el arnés de seguridad en el almacén?",
+    opts:["Siempre que se trabaje de pie","En trabajos en altura a partir de 2 metros cuando no hay protección colectiva","Solo si el trabajador lo pide","A partir de 4 metros de altura"],
+    a:1, exp:"El arnés anticaída es obligatorio en trabajos en altura desde 2 metros cuando no existen protecciones colectivas (barandillas, redes). Debe anclarse a puntos certificados." },
 
-button:hover{
-background:#00a6d6;
-}
+  // ══════════════ BLOQUE 4: SEÑALIZACIÓN DE SEGURIDAD ══════════════
+  { id:25, block:"Señalización", difficulty:"fácil",
+    q:"¿Qué forma y colores tienen las señales de PROHIBICIÓN?",
+    opts:["Triángulo amarillo con símbolo negro","Círculo con fondo blanco, banda y símbolo rojos","Rectángulo verde con símbolo blanco","Cuadrado azul con símbolo blanco"],
+    a:1, exp:"Las señales de prohibición: forma circular, fondo blanco, banda diagonal y borde rojos, símbolo negro. Ejemplos: prohibido fumar, prohibido el paso de peatones." },
+  { id:26, block:"Señalización", difficulty:"fácil",
+    q:"¿Qué señal indica la ubicación de un extintor de incendios?",
+    opts:["Señal amarilla triangular","Señal azul cuadrada","Señal roja rectangular con símbolo blanco","Señal verde rectangular"],
+    a:2, exp:"Las señales de lucha contra incendios (extintores, BIEs, pulsadores de alarma) son rectangulares o cuadradas con FONDO ROJO y símbolo blanco." },
+  { id:27, block:"Señalización", difficulty:"fácil",
+    q:"¿Qué color identifica las señales de ADVERTENCIA O PELIGRO?",
+    opts:["Rojo","Azul","Amarillo/naranja con triángulo negro","Verde"],
+    a:2, exp:"Las señales de advertencia tienen forma triangular, fondo amarillo y símbolo negro. Alertan de un peligro: suelo resbaladizo, cargas suspendidas, alta tensión, etc." },
+  { id:28, block:"Señalización", difficulty:"fácil",
+    q:"¿Qué color identifica las señales de OBLIGACIÓN (EPIs)?",
+    opts:["Amarillo","Verde","Rojo","Azul con símbolo blanco"],
+    a:3, exp:"Las señales de obligación tienen forma circular, fondo azul y símbolo blanco. Indican uso obligatorio de EPI: casco, guantes, calzado, etc." },
+  { id:29, block:"Señalización", difficulty:"medio",
+    q:"¿Qué color se usa para marcar en el suelo los pasillos peatonales?",
+    opts:["Rojo","Blanco","Amarillo","Azul"],
+    a:2, exp:"Las líneas amarillas en el suelo delimitan los pasillos y zonas de tráfico de personas y vehículos en el almacén. El amarillo es el estándar internacional para vías de tránsito." },
+  { id:30, block:"Señalización", difficulty:"medio",
+    q:"¿A qué altura mínima deben colocarse las señales en zonas de paso?",
+    opts:["A nivel del suelo","Entre 1,7 y 2,1 metros","Siempre por encima de 3 metros","No existe altura regulada"],
+    a:1, exp:"La normativa recomienda colocar señales a una altura de entre 1,7 y 2,1 metros para que sean visibles sin obstaculizar el paso. Deben ser visibles desde lejos." },
+  { id:31, block:"Señalización", difficulty:"difícil",
+    q:"¿Qué RD regula la señalización de seguridad y salud en el trabajo?",
+    opts:["RD 485/1997","RD 773/1997","RD 486/1997","RD 1215/1997"],
+    a:0, exp:"El Real Decreto 485/1997 regula las disposiciones mínimas en materia de señalización de seguridad y salud en el trabajo, estableciendo tipos, colores y formas." },
+  { id:32, block:"Señalización", difficulty:"medio",
+    q:"¿Las señales de SALVAMENTO Y SOCORRO qué forma y color tienen?",
+    opts:["Círculo azul","Triángulo rojo","Rectángulo o cuadrado verde con símbolo blanco","Círculo amarillo"],
+    a:2, exp:"Las señales de salvamento (salidas de emergencia, duchas de seguridad, camillas) son rectangulares o cuadradas con fondo verde y símbolo blanco." },
 
-.option{
-display:block;
-margin:10px auto;
-padding:12px;
-width:100%;
-max-width:400px;
-border-radius:8px;
-background:white;
-color:black;
-cursor:pointer;
-}
+  // ══════════════ BLOQUE 5: DISEÑO DEL ALMACÉN ══════════════
+  { id:33, block:"Diseño del Almacén", difficulty:"fácil",
+    q:"¿Cuál es la anchura mínima de pasillo para tráfico de peatones SOLO?",
+    opts:["0,5 metros","1 metro","1,5 metros","2 metros"],
+    a:1, exp:"Los pasillos exclusivamente peatonales deben tener como mínimo 1 metro de anchura. En zonas de alta frecuencia de paso se recomienda ampliar a 1,2-1,5 metros." },
+  { id:34, block:"Diseño del Almacén", difficulty:"fácil",
+    q:"¿Cuál es la anchura mínima para pasillos con carretillas en DOBLE sentido?",
+    opts:["1,5 metros","2 metros","3 metros","4 metros"],
+    a:2, exp:"Los pasillos con tráfico de carretillas en doble sentido requieren al menos 3 metros de anchura para permitir el cruce seguro y la visibilidad mutua de los operadores." },
+  { id:35, block:"Diseño del Almacén", difficulty:"medio",
+    q:"¿Qué iluminación mínima se requiere en las zonas de trabajo del almacén?",
+    opts:["50 lux","100 lux","200 lux","500 lux"],
+    a:2, exp:"El RD 486/1997 establece 200 lux como nivel mínimo en zonas de trabajo de almacén. Los puestos con tareas de mayor detalle pueden requerir 500 lux o más." },
+  { id:36, block:"Diseño del Almacén", difficulty:"medio",
+    q:"¿Qué distancia debe mantenerse entre la mercancía y el techo del almacén?",
+    opts:["No hay distancia regulada","Mínimo 0,5 metros","Mínimo 1 metro","Mínimo 2 metros"],
+    a:1, exp:"Debe mantenerse una separación mínima de 0,5 metros entre la mercancía y los sprinklers o el techo para que los sistemas antiincendios funcionen eficazmente." },
+  { id:37, block:"Diseño del Almacén", difficulty:"fácil",
+    q:"¿Qué distancia máxima puede haber entre extintores portátiles?",
+    opts:["10 metros","15 metros","20 metros","25 metros"],
+    a:1, exp:"El Reglamento de instalaciones de protección contra incendios establece que la distancia máxima de recorrido desde cualquier punto hasta un extintor no debe superar 15 metros." },
+  { id:38, block:"Diseño del Almacén", difficulty:"medio",
+    q:"¿Por qué deben estar ancladas las estanterías metálicas al suelo o a la pared?",
+    opts:["Por estética","Para evitar vuelcos que pueden causar aplastamientos y caídas de carga","Para facilitar la limpieza","Es opcional en estanterías de menos de 3 metros"],
+    a:1, exp:"El anclaje es obligatorio para evitar el vuelco de las estanterías, que puede causar accidentes gravísimos (aplastamiento). El anclaje debe ser revisado periódicamente." },
+  { id:39, block:"Diseño del Almacén", difficulty:"difícil",
+    q:"¿Qué información MÍNIMA debe indicar el cartel de carga máxima de una estantería?",
+    opts:["Solo la carga total de la estantería","Carga máxima por balda, por módulo y total; peso máximo del palet","Solo el material de fabricación","Solo el nombre del fabricante"],
+    a:1, exp:"Cada estantería debe indicar la carga máxima autorizada por balda, por módulo y total. Superar estos límites puede provocar el colapso de la estructura." },
+  { id:40, block:"Diseño del Almacén", difficulty:"fácil",
+    q:"¿Para qué sirven los protectores de esquina en las estanterías?",
+    opts:["Solo son decorativos","Para proteger los montantes del impacto de carretillas y evitar su deformación","Para anclar la estantería al suelo","Para indicar la carga máxima"],
+    a:1, exp:"Los protectores de esquina (generalmente de acero o polietileno) absorben los impactos de las carretillas y evitan que se dañen o deformen los montantes de la estantería." },
 
-.correct{background:#4caf50 !important;color:white;}
-.wrong{background:#e53935 !important;color:white;}
+  // ══════════════ BLOQUE 6: ACCIDENTES EN EL ALMACÉN ══════════════
+  { id:41, block:"Accidentes", difficulty:"fácil",
+    q:"¿Cuál es el accidente más frecuente en almacenes?",
+    opts:["Incendios","Caídas al mismo nivel y sobreesfuerzos","Explosiones de productos químicos","Caídas desde gran altura"],
+    a:1, exp:"Las caídas al mismo nivel (tropiezos, resbalones) y los sobreesfuerzos por manipulación manual de cargas son estadísticamente los accidentes más frecuentes en almacenes." },
+  { id:42, block:"Accidentes", difficulty:"medio",
+    q:"¿Qué causa principal producen los accidentes por SOBREESFUERZO en almacén?",
+    opts:["Exceso de velocidad de carretillas","Manipulación manual de cargas sin técnica correcta y superando límites recomendados","Exposición a ruido excesivo","Iluminación insuficiente"],
+    a:1, exp:"Los sobreesfuerzos son causados por levantar cargas sin doblar rodillas, girar el tronco con carga, cargas superiores a 25 kg o tareas repetitivas sin rotación." },
+  { id:43, block:"Accidentes", difficulty:"fácil",
+    q:"¿Qué es un accidente 'in itinere'?",
+    opts:["El que ocurre dentro del almacén","El que ocurre en el trayecto habitual entre el domicilio y el trabajo","El que ocurre durante la pausa del bocadillo","El accidente con carretilla"],
+    a:1, exp:"El accidente in itinere ocurre en el camino entre el domicilio y el centro de trabajo (y viceversa), siguiendo el trayecto habitual. Está reconocido como accidente laboral." },
+  { id:44, block:"Accidentes", difficulty:"medio",
+    q:"¿Qué tipo de lesión producen principalmente los atrapamientos con maquinaria?",
+    opts:["Quemaduras","Amputaciones, aplastamientos y heridas graves","Solo contusiones leves","Solo daño a la maquinaria"],
+    a:1, exp:"Los atrapamientos entre partes móviles de maquinaria o entre carga y estructura fija son accidentes graves que pueden causar amputaciones, aplastamientos y en casos extremos la muerte." },
+  { id:45, block:"Accidentes", difficulty:"medio",
+    q:"¿Cuál es la principal causa de accidentes con carretillas elevadoras?",
+    opts:["Carretillas mal pintadas","Exceso de velocidad, maniobras inseguras y falta de visibilidad","Carretillas muy antiguas","Pasillos demasiado anchos"],
+    a:1, exp:"La mayoría de accidentes con carretillas se deben a: exceso de velocidad, maniobras sin visión directa, falta de señalización acústica/luminosa y no respetar prioridades de paso." },
+  { id:46, block:"Accidentes", difficulty:"difícil",
+    q:"¿Qué es la 'caída de objetos por derrumbamiento'?",
+    opts:["Una caída de personas desde estanterías","El colapso de una estantería o caída de mercancía mal ubicada sobre un trabajador","Una caída durante la carga de camiones","Ninguna de las anteriores"],
+    a:1, exp:"La caída de objetos por derrumbamiento ocurre cuando la estantería colapsa o la mercancía cae por sobrecarga, mal apilado o impacto de carretillas. Es uno de los accidentes más graves del almacén." },
+  { id:47, block:"Accidentes", difficulty:"fácil",
+    q:"¿Qué medida BÁSICA previene las caídas al mismo nivel en pasillos?",
+    opts:["Usar calzado de tacón","Mantener el orden, limpiar derrames inmediatamente y señalizar obstáculos","Solo usar iluminación especial","Correr menos por los pasillos"],
+    a:1, exp:"La prevención de caídas al mismo nivel se basa en: orden y limpieza constante, limpieza inmediata de derrames, señalización de suelo mojado y eliminación de obstáculos en pasillos." },
 
-#timer{font-size:20px;margin:10px;}
+  // ══════════════ BLOQUE 7: EVALUACIÓN DE RIESGOS ══════════════
+  { id:48, block:"Evaluación de Riesgos", difficulty:"fácil",
+    q:"¿Cuáles son los dos factores principales que determinan el nivel de riesgo?",
+    opts:["Velocidad y distancia","Probabilidad de que ocurra el daño y severidad del daño","Número de trabajadores y turno","Antigüedad del equipo y marca"],
+    a:1, exp:"El nivel de riesgo se evalúa combinando la PROBABILIDAD de que ocurra el accidente y la SEVERIDAD (gravedad) del daño que causaría si ocurriera." },
+  { id:49, block:"Evaluación de Riesgos", difficulty:"medio",
+    q:"¿Con qué frecuencia debe revisarse la evaluación de riesgos?",
+    opts:["Solo una vez cuando se abre el almacén","Cuando se detecten daños a la salud, cambios en condiciones de trabajo o a instancia del Delegado de Prevención","Cada 10 años obligatoriamente","Solo si hay un accidente grave"],
+    a:1, exp:"La evaluación de riesgos debe revisarse cuando cambien las condiciones de trabajo, se introduzca nueva maquinaria, se detecten daños a la salud o lo solicite el delegado de prevención." },
+  { id:50, block:"Evaluación de Riesgos", difficulty:"medio",
+    q:"¿Qué es un 'factor de riesgo'?",
+    opts:["El accidente en sí mismo","Una condición o característica que incrementa la probabilidad de que ocurra un daño","El daño sufrido por el trabajador","La multa por incumplimiento"],
+    a:1, exp:"Un factor de riesgo es cualquier elemento (condición de trabajo, comportamiento, agente físico/químico) que aumenta la probabilidad de que ocurra un accidente o enfermedad profesional." },
+  { id:51, block:"Evaluación de Riesgos", difficulty:"difícil",
+    q:"¿Qué diferencia hay entre riesgo TRIVIAL y riesgo INTOLERABLE?",
+    opts:["Solo el número de trabajadores afectados","Trivial: no requiere acción; Intolerable: no se puede empezar ni continuar el trabajo hasta reducirlo","Son sinónimos","Solo depende del tipo de empresa"],
+    a:1, exp:"Según la clasificación de riesgos: TRIVIAL (no se requiere acción), TOLERABLE (mejoras económicamente justificadas), MODERADO (medidas en plazo), IMPORTANTE (antes de inicio) e INTOLERABLE (paralización)." },
+  { id:52, block:"Evaluación de Riesgos", difficulty:"medio",
+    q:"¿Quién debe participar en la evaluación de riesgos?",
+    opts:["Solo el técnico de prevención externo","Solo el empresario","El empresario, técnicos de prevención y los trabajadores o sus representantes","Solo los mandos intermedios"],
+    a:2, exp:"La evaluación de riesgos debe ser participativa. Los trabajadores conocen mejor que nadie los riesgos reales de su puesto. Los delegados de prevención deben ser consultados." },
+  { id:53, block:"Evaluación de Riesgos", difficulty:"difícil",
+    q:"¿Qué es el 'plan de prevención de riesgos laborales'?",
+    opts:["Un listado de EPIs de la empresa","El documento que integra la prevención en la empresa: política, organización, procedimientos y recursos","Solo el plan de emergencia","El registro de accidentes del año"],
+    a:1, exp:"El Plan de Prevención es el documento maestro que integra la PRL en la empresa: política preventiva, organización, procedimientos de trabajo, recursos asignados y evaluación de riesgos." },
 
-.hidden{display:none;}
+  // ══════════════ BLOQUE 8: CARGA/DESCARGA Y ESTIBA ══════════════
+  { id:54, block:"Carga y Descarga", difficulty:"fácil",
+    q:"¿Qué riesgo principal existe al trabajar en el muelle de carga con camiones?",
+    opts:["Estrés por monotonía","Caídas desde el muelle o desde la caja del camión","Exceso de iluminación","Temperatura excesiva siempre"],
+    a:1, exp:"El muelle de carga es una zona de alto riesgo de caídas (diferencia de nivel entre muelle y caja del camión), atropellos y golpes con mercancía. Requiere señalización y EPIs específicos." },
+  { id:55, block:"Carga y Descarga", difficulty:"medio",
+    q:"¿Qué es una 'rampas niveladora' o 'rampa de muelle'?",
+    opts:["Una señal de advertencia en el muelle","Un dispositivo que salva el desnivel entre el suelo del muelle y el suelo del camión","Un tipo de carretilla para muelles","Una protección anticaída"],
+    a:1, exp:"La rampa niveladora (dock leveler) es un dispositivo hidráulico o mecánico que crea un puente entre el muelle y el camión, eliminando el desnivel y permitiendo el paso seguro de carretillas." },
+  { id:56, block:"Carga y Descarga", difficulty:"medio",
+    q:"¿Qué medida previene el movimiento accidental del camión durante la carga/descarga?",
+    opts:["Señalizar el área","Calzar las ruedas del camión y usar frenos de estacionamiento","Solo avisar al conductor","Cerrar las puertas del almacén"],
+    a:1, exp:"El calzado de ruedas (cuñas) y el freno de estacionamiento son obligatorios para inmovilizar el camión durante las operaciones. Un camión que se mueve puede causar accidentes gravísimos." },
+  { id:57, block:"Carga y Descarga", difficulty:"medio",
+    q:"¿Qué significa 'estiba correcta' de la mercancía?",
+    opts:["Colocar la mercancía lo más alto posible","Acomodar y asegurar la mercancía de forma que no pueda moverse, caer o dañarse durante el transporte","Solo etiquetar la mercancía","Solo pesar la mercancía"],
+    a:1, exp:"La estiba es la colocación y sujeción segura de la carga. Una mala estiba puede causar vuelco del camión, caída de carga sobre trabajadores y daños a la mercancía." },
+  { id:58, block:"Carga y Descarga", difficulty:"difícil",
+    q:"¿Qué carga máxima permite una carretilla contrapesada estándar de 2.500 kg en el centro de carga?",
+    opts:["Siempre 2.500 kg independientemente de la altura de elevación","La carga máxima disminuye al elevar la carga, según el diagrama de carga del fabricante","La carga máxima aumenta al elevar","No existe límite si la carga está centrada"],
+    a:1, exp:"La capacidad de carga de una carretilla disminuye a medida que se eleva la horquilla. Siempre debe consultarse el diagrama de carga del fabricante antes de elevar cargas pesadas." },
+  { id:59, block:"Carga y Descarga", difficulty:"medio",
+    q:"¿Qué distancia de seguridad mínima se recomienda entre carretillas en movimiento?",
+    opts:["No existe distancia regulada","Al menos la distancia de frenado total a la velocidad de circulación (aprox. 3 longitudes del vehículo)","50 centímetros","5 metros siempre"],
+    a:1, exp:"La distancia de seguridad entre carretillas debe ser equivalente a la distancia de frenado completo a la velocidad de circulación, generalmente unas 3 longitudes del vehículo." },
 
-input{
-padding:10px;
-border-radius:8px;
-border:none;
-margin-top:10px;
-}
+  // ══════════════ BLOQUE 9: MERCANCÍAS PELIGROSAS (APQ) ══════════════
+  { id:60, block:"Mercancías APQ", difficulty:"fácil",
+    q:"¿Qué significa APQ?",
+    opts:["Almacenamiento Previo de Cualquier mercancía","Almacenamiento de Productos Químicos","Análisis de Productos de Calidad","Almacenamiento de Productos en Cuarentena"],
+    a:1, exp:"APQ = Almacenamiento de Productos Químicos. Regulado por el RD 379/2001 (ITC-MIE-APQ 1 a 7). Establece requisitos para almacenar líquidos inflamables, GLP, sólidos peligrosos, etc." },
+  { id:61, block:"Mercancías APQ", difficulty:"medio",
+    q:"¿Qué es la Ficha de Datos de Seguridad (FDS)?",
+    opts:["El precio del producto químico","El documento que informa sobre peligros, propiedades, medidas de seguridad y actuación en emergencias para un producto químico","Solo la etiqueta del producto","El certificado de calidad del producto"],
+    a:1, exp:"La FDS (Safety Data Sheet) es un documento obligatorio que debe acompañar a los productos químicos. Tiene 16 secciones y contiene toda la información de seguridad, emergencia y manejo." },
+  { id:62, block:"Mercancías APQ", difficulty:"fácil",
+    q:"¿Qué símbolo indica que un producto es INFLAMABLE según el SGA?",
+    opts:["Una calavera","Una llama naranja sobre fondo blanco","Un círculo con una llama","Un signo de exclamación"],
+    a:1, exp:"El pictograma de llama (GHS02) indica productos inflamables, gases inflamables, aerosoles inflamables, líquidos y sólidos inflamables en el Sistema Globalmente Armonizado (SGA/GHS)." },
+  { id:63, block:"Mercancías APQ", difficulty:"medio",
+    q:"¿Pueden almacenarse juntos productos oxidantes e inflamables?",
+    opts:["Sí, si están bien etiquetados","No, porque la combinación puede provocar incendios o explosiones violentas","Sí, si hay ventilación suficiente","Solo si están en pequeñas cantidades"],
+    a:1, exp:"Los productos oxidantes y los inflamables son INCOMPATIBLES: los oxidantes aportan oxígeno que acelera la combustión. Deben almacenarse separados y siguiendo las tablas de incompatibilidades." },
+  { id:64, block:"Mercancías APQ", difficulty:"difícil",
+    q:"¿Qué categoría ADR clasifica las materias inflamables líquidas para transporte?",
+    opts:["Clase 1","Clase 3","Clase 8","Clase 9"],
+    a:1, exp:"La clase 3 del ADR (Acuerdo Europeo de Transporte de Mercancías Peligrosas por Carretera) corresponde a líquidos inflamables como gasolina, acetona, alcohol, etc." },
+  { id:65, block:"Mercancías APQ", difficulty:"medio",
+    q:"Ante un derrame de producto químico en el almacén, ¿cuál es la primera acción?",
+    opts:["Limpiar inmediatamente con agua","Ventilar la zona, evacuar y consultar la FDS antes de actuar","Cubrir con serrín sin protección","Mezclar con agua para diluir"],
+    a:1, exp:"Ante un derrame: 1) EVACUAR la zona, 2) VENTILAR, 3) CONSULTAR la FDS para saber el producto y sus riesgos, 4) USAR los EPIs indicados en la FDS, 5) Aplicar el procedimiento indicado." },
+  { id:66, block:"Mercancías APQ", difficulty:"fácil",
+    q:"¿Qué pictograma SGA indica PELIGRO DE TOXICIDAD AGUDA (veneno)?",
+    opts:["Una llama","Una calavera con tibias cruzadas","Un árbol muerto","Un signo de exclamación"],
+    a:1, exp:"La calavera con tibias cruzadas (GHS06) indica toxicidad aguda grave: puede causar la muerte o daño grave por ingestión, inhalación o contacto cutáneo." },
+  { id:67, block:"Mercancías APQ", difficulty:"medio",
+    q:"¿Qué significa el pictograma de 'árbol muerto con pez'?",
+    opts:["Producto radiactivo","Peligro medioambiental: tóxico para organismos acuáticos","Producto corrosivo","Producto irritante"],
+    a:1, exp:"El pictograma de árbol muerto y pez (GHS09) indica peligro para el medio ambiente acuático. Estos productos no pueden verterse por el desagüe y requieren gestión como residuo peligroso." },
 
-.ranking{
-text-align:left;
-background:rgba(255,255,255,0.1);
-padding:10px;
-border-radius:10px;
-margin-top:20px;
-}
-</style>
-</head>
-<body>
+  // ══════════════ BLOQUE 10: ERGONOMÍA ══════════════
+  { id:68, block:"Ergonomía", difficulty:"fácil",
+    q:"¿Qué estudia la ergonomía?",
+    opts:["Solo el diseño de mobiliario de oficina","La adaptación del trabajo a las capacidades y limitaciones del ser humano","Solo el levantamiento de cargas","Solo la iluminación de los puestos"],
+    a:1, exp:"La ergonomía estudia la interacción entre el ser humano y su entorno de trabajo para diseñar sistemas que maximicen la seguridad, salud, eficiencia y bienestar del trabajador." },
+  { id:69, block:"Ergonomía", difficulty:"fácil",
+    q:"¿Cuál es el peso máximo recomendado para manipulación manual de cargas en HOMBRES?",
+    opts:["15 kg","25 kg","40 kg","50 kg"],
+    a:1, exp:"El RD 487/1997 establece que cargas superiores a 25 kg para hombres (15 kg para mujeres) pueden suponer un riesgo. En condiciones no ideales (giro, lejanía del cuerpo) el límite es menor." },
+  { id:70, block:"Ergonomía", difficulty:"fácil",
+    q:"¿Cuál es el peso máximo recomendado para manipulación manual de cargas en MUJERES?",
+    opts:["5 kg","10 kg","15 kg","25 kg"],
+    a:2, exp:"Para mujeres el límite es 15 kg en condiciones ideales. En condiciones desfavorables (lejos del cuerpo, con giro de tronco, en altura o en foso) los límites se reducen considerablemente." },
+  { id:71, block:"Ergonomía", difficulty:"medio",
+    q:"¿Cuál es la técnica correcta para levantar una carga pesada del suelo?",
+    opts:["Doblar la espalda con piernas rectas","Doblar las rodillas manteniendo la espalda recta y la carga cerca del cuerpo","Girar el tronco mientras se levanta","Levantar rápidamente para reducir el tiempo de esfuerzo"],
+    a:1, exp:"La técnica correcta: pies separados al ancho de hombros, doblar RODILLAS (no espalda), espalda recta, carga cerca del cuerpo, levantarse usando las piernas. Nunca girar el tronco con carga." },
+  { id:72, block:"Ergonomía", difficulty:"medio",
+    q:"¿Qué son los TME (Trastornos Músculo-Esqueléticos)?",
+    opts:["Enfermedades mentales relacionadas con el trabajo","Lesiones que afectan músculos, tendones, nervios y articulaciones causadas por el trabajo repetitivo o sobreesfuerzos","Solo las hernias de disco","Solo los esguinces de tobillo"],
+    a:1, exp:"Los TME incluyen: hernias discales, tendinitis, síndrome del túnel carpiano, epicondilitis, etc. Son la primera causa de baja laboral en España y muy frecuentes en almacenes." },
+  { id:73, block:"Ergonomía", difficulty:"difícil",
+    q:"¿Qué evalúa el método REBA?",
+    opts:["El riesgo de incendio","La carga postural en el cuerpo entero, especialmente útil en tareas de manipulación manual","La exposición a ruido","La calidad del aire interior"],
+    a:1, exp:"El método REBA (Rapid Entire Body Assessment) evalúa la carga postural en tareas que implican al cuerpo entero, como las de manipulación manual en almacenes, puntuando el riesgo de TME." },
+  { id:74, block:"Ergonomía", difficulty:"medio",
+    q:"¿Qué es la 'carga mental' en el trabajo del almacén?",
+    opts:["El peso de los documentos que lleva el trabajador","El esfuerzo cognitivo requerido (atención, toma de decisiones, memoria) que puede generar fatiga mental y errores","Solo el estrés por jefes","Solo trabajar de noche"],
+    a:1, exp:"La carga mental implica el nivel de procesamiento cognitivo exigido: atención para no cometer errores, decisiones bajo presión de tiempo, manejo de información. Puede causar fatiga y aumentar el riesgo." },
+  { id:75, block:"Ergonomía", difficulty:"medio",
+    q:"¿Qué medida ergonómica ayuda a prevenir los TME en tareas repetitivas?",
+    opts:["Aumentar el ritmo de trabajo","La rotación de puestos de trabajo para usar grupos musculares diferentes","Solo el uso de fajas lumbares","Eliminar las pausas de descanso"],
+    a:1, exp:"La rotación de puestos permite que el trabajador alterne tareas que implican diferentes grupos musculares, reduciendo la fatiga y el riesgo de lesión por repetición." },
 
-<div class="container">
+  // ══════════════ BLOQUE 11: RIESGOS PSICOSOCIALES ══════════════
+  { id:76, block:"Riesgos Psicosociales", difficulty:"fácil",
+    q:"¿Qué son los riesgos psicosociales en el almacén?",
+    opts:["Solo los accidentes físicos graves","Factores organizativos y relacionales que afectan a la salud mental y pueden aumentar el riesgo de accidente (estrés, fatiga, acoso)","Solo el trabajo nocturno","Solo el ruido excesivo"],
+    a:1, exp:"Los riesgos psicosociales derivan de las condiciones de organización del trabajo (carga, turnos, relaciones) y afectan a la salud mental, aumentando indirectamente el riesgo de accidente." },
+  { id:77, block:"Riesgos Psicosociales", difficulty:"medio",
+    q:"¿Qué es el 'burnout' o síndrome de desgaste profesional?",
+    opts:["Un accidente físico grave","Un estado de agotamiento físico, mental y emocional crónico derivado del trabajo, con despersonalización y baja realización personal","Un tipo de enfermedad contagiosa","Un accidente de tráfico laboral"],
+    a:1, exp:"El burnout (Maslach) se caracteriza por: agotamiento emocional, despersonalización (trato frío) y baja realización personal. Es frecuente en trabajos con alta exigencia y poco control." },
+  { id:78, block:"Riesgos Psicosociales", difficulty:"fácil",
+    q:"¿Cómo afecta la FATIGA al riesgo de accidente en el almacén?",
+    opts:["No afecta, el trabajador se adapta","Reduce la atención y los reflejos, aumentando significativamente el riesgo de accidente","Solo aumenta el absentismo","Solo afecta a la calidad del trabajo, no a la seguridad"],
+    a:1, exp:"La fatiga disminuye la capacidad de atención, prolonga el tiempo de reacción y aumenta los errores. Un trabajador fatigado tiene un riesgo de accidente hasta 3 veces mayor." },
+  { id:79, block:"Riesgos Psicosociales", difficulty:"medio",
+    q:"¿Qué es el 'mobbing' o acoso laboral?",
+    opts:["Un tipo de accidente de trabajo","Conducta abusiva, repetida y sistemática dirigida a hostigar psicológicamente a un trabajador","Un ruido específico del almacén","Una técnica de carga de mercancía"],
+    a:1, exp:"El mobbing es el acoso psicológico laboral: conductas repetidas que dañan la dignidad del trabajador. Genera ansiedad, depresión y puede causar bajas de larga duración." },
+  { id:80, block:"Riesgos Psicosociales", difficulty:"difícil",
+    q:"¿Qué variables organizativas pueden generar estrés en trabajadores de almacén?",
+    opts:["Solo el tipo de mercancía que se manipula","Turnos nocturnos o rotatorios, presión de tiempo, falta de autonomía, incertidumbre laboral y conflictos de rol","Solo el salario","Solo las relaciones con clientes"],
+    a:1, exp:"Los estresores organizativos incluyen: turnos antisociales, alta demanda con bajo control, monotonía, presión por objetivos, inseguridad laboral y conflictos de rol o interpersonales." },
 
-<h1>🔥 MegaTest PRL Almacén</h1>
+  // ══════════════ BLOQUE 12: INCENDIOS EN EL ALMACÉN ══════════════
+  { id:81, block:"Incendios", difficulty:"fácil",
+    q:"¿Cuáles son los tres elementos del 'triángulo del fuego'?",
+    opts:["Calor, viento y agua","Combustible, comburente (oxígeno) y energía de ignición","Madera, plástico y papel","Gas, electricidad y madera"],
+    a:1, exp:"El triángulo del fuego: COMBUSTIBLE (material que arde), COMBURENTE (generalmente oxígeno del aire) y ENERGÍA DE IGNICIÓN (chispa, llama, calor). Eliminar uno de los tres extingue el fuego." },
+  { id:82, block:"Incendios", difficulty:"medio",
+    q:"¿Qué agente extintor se usa para fuegos eléctricos (clase E)?",
+    opts:["Agua en chorro","CO₂ (dióxido de carbono) o polvo BC","Espuma","Solo arena"],
+    a:1, exp:"Para fuegos con equipos eléctricos bajo tensión se usa CO₂ o polvo BC porque son no conductores. NUNCA se usa agua porque puede causar electrocución y cortocircuitos." },
+  { id:83, block:"Incendios", difficulty:"fácil",
+    q:"¿Cuándo debe revisarse un extintor portátil?",
+    opts:["Cada 5 años","Cada año como mínimo (revisión trimestral visual + anual por empresa especializada)","Solo después de usarlo","Cada 3 meses siempre por empresa especializada"],
+    a:1, exp:"Los extintores requieren: inspección visual cada 3 meses (por la empresa), revisión anual por empresa especializada y retimbrado cada 5 años." },
+  { id:84, block:"Incendios", difficulty:"medio",
+    q:"¿Qué es un BIE?",
+    opts:["Un tipo de carretilla","Boca de Incendio Equipada: sistema fijo de extinción con manguera, manómetro y válvula","Un extintor portátil grande","Un detector de humos"],
+    a:1, exp:"La BIE (Boca de Incendio Equipada) es un sistema fijo compuesto por: armario, manguera de 20-25 mm, manómetro y lanza. Proporciona agua a presión para la extinción inicial de incendios." },
+  { id:85, block:"Incendios", difficulty:"fácil",
+    q:"¿Qué son los detectores de IONIZACIÓN?",
+    opts:["Detectores de temperatura","Detectores que detectan partículas invisibles de humo generadas en combustión activa (llama viva)","Detectores de gas","Detectores de luz"],
+    a:1, exp:"Los detectores de ionización detectan partículas de combustión del humo en sus fases iniciales (fuego con llama). Son más sensibles a fuegos rápidos y con llama activa." },
+  { id:86, block:"Incendios", difficulty:"medio",
+    q:"¿Qué significa la letra 'A' en la clasificación de fuegos?",
+    opts:["Metales","Sólidos (madera, papel, tela, plástico)","Líquidos inflamables","Gases"],
+    a:1, exp:"Clase A: fuegos de sólidos (madera, papel, cartón, tejidos, plástico). El agente extintor preferente es el AGUA. Clase B: líquidos. Clase C: gases. Clase D: metales. Clase F: aceites." },
+  { id:87, block:"Incendios", difficulty:"difícil",
+    q:"¿Qué es un sistema de SPRINKLERS?",
+    opts:["Un tipo de extintor portátil","Sistema automático de extinción por agua que se activa térmicamente cuando detecta calor","Un tipo de detector de humos","Un sistema de ventilación antiincendios"],
+    a:1, exp:"Los sprinklers son rociadores automáticos que se activan individualmente al alcanzar una temperatura de fusión del elemento termosensible (68°C-93°C), pulverizando agua sobre el foco de incendio." },
 
-<div id="menu">
-<button onclick="startExam()">📘 Modo Examen (20 preguntas)</button>
-<button onclick="startTime()">⏱️ Reto 60 segundos</button>
-<button onclick="showRanking()">🏆 Ranking</button>
-</div>
+  // ══════════════ BLOQUE 13: PRIMEROS AUXILIOS ══════════════
+  { id:88, block:"Primeros Auxilios", difficulty:"fácil",
+    q:"¿Qué significa la regla PAS?",
+    opts:["Prevenir, Actuar, Sanar","Proteger, Alertar, Socorrer","Parar, Ayudar, Señalizar","Primero, Asistir, Salvar"],
+    a:1, exp:"PAS: PROTEGER la zona del accidente (evitar más víctimas), ALERTAR al 112 con la información necesaria, SOCORRER al herido con los conocimientos disponibles. SIEMPRE en este orden." },
+  { id:89, block:"Primeros Auxilios", difficulty:"fácil",
+    q:"¿Cuáles son los signos de la parada cardiorrespiratoria (PCR)?",
+    opts:["Dolor de cabeza y mareos","Inconsciencia, ausencia de respiración normal y ausencia de pulso","Solo ausencia de pulso","Solo inconsciencia"],
+    a:1, exp:"La PCR se reconoce por: inconsciencia (no responde a estímulos), ausencia de respiración normal (no respira o jadea) y ausencia de pulso central (carotídeo). Requiere RCP inmediata." },
+  { id:90, block:"Primeros Auxilios", difficulty:"medio",
+    q:"¿Cuál es la secuencia correcta de RCP básica en adultos?",
+    opts:["2 ventilaciones y luego 30 compresiones","30 compresiones torácicas y 2 ventilaciones (30:2), comenzando siempre por las compresiones","Solo ventilaciones si no hay AED","Solo compresiones si hay dos socorristas"],
+    a:1, exp:"La RCP básica en adultos: 30 COMPRESIONES torácicas (5-6 cm de profundidad, 100-120/minuto) + 2 VENTILACIONES. Comenzar SIEMPRE por las compresiones. Continuar hasta que llegue el DEA o los servicios de emergencia." },
+  { id:91, block:"Primeros Auxilios", difficulty:"fácil",
+    q:"¿Qué es el DEA (Desfibrilador Externo Automático)?",
+    opts:["Un medicamento para el dolor","Un aparato que analiza el ritmo cardíaco y aplica descarga eléctrica si es necesario para restaurar el ritmo normal","Un aparato de oxigenoterapia","Un tipo de camilla especial"],
+    a:1, exp:"El DEA analiza automáticamente el ritmo cardíaco y, si detecta fibrilación ventricular, indica la descarga y la aplica. Su uso precoz junto con la RCP multiplica las posibilidades de supervivencia." },
+  { id:92, block:"Primeros Auxilios", difficulty:"medio",
+    q:"¿Cuándo se aplica la Posición Lateral de Seguridad (PLS)?",
+    opts:["Ante cualquier accidentado","A la persona INCONSCIENTE que SÍ RESPIRA, para evitar asfixia por vómito o caída de lengua","Ante una parada cardiorrespiratoria","Solo ante traumatismos cervicales"],
+    a:1, exp:"La PLS se usa en personas inconscientes que respiran espontáneamente. La posición lateral previene la obstrucción de las vías aéreas por la lengua o vómito. SI NO respira → RCP inmediata." },
+  { id:93, block:"Primeros Auxilios", difficulty:"fácil",
+    q:"¿Cómo se actúa ante una HEMORRAGIA externa abundante?",
+    opts:["Aplicar torniquete inmediatamente en la raíz del miembro","Presión directa y mantenida sobre la herida con tela limpia o apósito estéril","Elevar el miembro sin presionar","Lavar la herida con agua abundante primero"],
+    a:1, exp:"La PRESIÓN DIRECTA es la primera y más efectiva medida para hemorragias externas. El torniquete solo se usa en caso de amputación o hemorragia masiva que no cede con presión directa." },
+  { id:94, block:"Primeros Auxilios", difficulty:"medio",
+    q:"¿Qué NO se debe hacer ante una posible fractura de hueso?",
+    opts:["Inmovilizar la zona afectada","Mover el miembro fracturado intentando corregir la posición","Cubrir heridas si la fractura es abierta","Llamar al 112"],
+    a:1, exp:"NUNCA se debe intentar realinear una fractura ni mover el miembro. La inmovilización en la posición en que se encuentra evita daños adicionales a vasos, nervios y tejidos blandos." },
+  { id:95, block:"Primeros Auxilios", difficulty:"medio",
+    q:"¿Cómo se trata una quemadura química por ácido o base?",
+    opts:["Aplicar neutralizante (base para ácido, ácido para base)","Lavar con abundante agua corriente durante 15-20 minutos, retirando la ropa contaminada","Cubrir con vendaje sin lavar","Aplicar pomada antibiótica directamente"],
+    a:1, exp:"El lavado con AGUA ABUNDANTE (15-20 minutos mínimo) es la primera acción. NUNCA usar neutralizantes: la reacción exotérmica puede empeorar la lesión. Retirar la ropa contaminada." },
+  { id:96, block:"Primeros Auxilios", difficulty:"difícil",
+    q:"¿Qué contenido MÍNIMO debe tener el botiquín de un almacén según normativa?",
+    opts:["Solo tiritas y agua oxigenada","Desinfectante, gasas, vendas, esparadrapo, tijeras, guantes desechables, manta térmica y manual de primeros auxilios","Solo gasas y tiritas","Solo lo que decida la empresa"],
+    a:1, exp:"El botiquín mínimo incluye: desinfectante, gasas estériles, vendas, esparadrapo, tijeras, guantes desechables (mínimo 2 pares), manta isotérmica, analgésico y manual de primeros auxilios actualizado." },
 
-<div id="game" class="hidden">
-<div id="timer"></div>
-<h3 id="question"></h3>
-<div id="options"></div>
-</div>
+  // ══════════════ BLOQUE 14: EMERGENCIAS Y EVACUACIÓN ══════════════
+  { id:97, block:"Emergencias", difficulty:"fácil",
+    q:"¿Qué es el Plan de Emergencia?",
+    opts:["Una lista de teléfonos útiles","El documento que establece las actuaciones a seguir ante situaciones de emergencia (incendio, accidente grave, vertido) para proteger vidas y bienes","Solo el mapa de evacuación","Solo el plan antiincendios"],
+    a:1, exp:"El Plan de Emergencia define: tipos de emergencia, medios de extinción y protección, evacuación, responsabilidades, comunicaciones y procedimientos específicos para cada tipo de emergencia." },
+  { id:98, block:"Emergencias", difficulty:"medio",
+    q:"¿Qué son los 'equipos de primera intervención' (EPI de emergencias)?",
+    opts:["Los EPIs individuales de los trabajadores","Trabajadores formados para dar respuesta inicial a una emergencia antes de la llegada de bomberos","El equipo de dirección de la empresa","Los dispositivos de detección de incendios"],
+    a:1, exp:"Los equipos de primera intervención son grupos de trabajadores formados para usar extintores y medios de extinción en la fase inicial de un incendio, antes de que lleguen los bomberos." },
+  { id:99, block:"Emergencias", difficulty:"fácil",
+    q:"¿Qué debe hacerse al escuchar la señal de evacuación del almacén?",
+    opts:["Esperar a que pase la alarma sin moverse","Evacuar por las salidas de emergencia señalizadas, sin correr, sin usar ascensores, cerrando puertas","Ir a buscar los objetos personales primero","Llamar a compañeros antes de salir"],
+    a:1, exp:"En evacuación: salir calmadamente por las salidas de emergencia (nunca ascensores), cerrar puertas (retarda propagación del fuego), dirigirse al punto de reunión y no volver a entrar." },
+  { id:100, block:"Emergencias", difficulty:"medio",
+    q:"¿Qué número se llama en España ante una emergencia grave?",
+    opts:["091 (Policía)","061 (Ambulancias)","112 (Emergencias europeo)","080 (Bomberos)"],
+    a:2, exp:"El 112 es el número de emergencias europeo que coordina policía, bomberos y ambulancias. En España atiende las 24h y es gratuito. Los demás números también funcionan pero el 112 es el unificado." },
+  { id:101, block:"Emergencias", difficulty:"difícil",
+    q:"¿Qué información debe comunicar quien llama al 112 ante un accidente?",
+    opts:["Solo el nombre y DNI","Qué ha pasado, dónde (dirección exacta), cuántos heridos, estado aparente de los heridos y si hay peligros adicionales","Solo el número de heridos","Solo el tipo de accidente"],
+    a:1, exp:"Al llamar al 112: QUÉ ha pasado, DÓNDE exactamente (dirección, punto kilométrico), CUÁNTOS heridos, su estado aparente (consciente/inconsciente, respira) y si hay peligros adicionales (fuego, productos químicos)." },
+  { id:102, block:"Emergencias", difficulty:"medio",
+    q:"¿Qué es el 'punto de reunión' en un plan de evacuación?",
+    opts:["El despacho del director","El lugar exterior, alejado y seguro donde se concentran los evacuados para control del personal y evitar que vuelvan al edificio","La salida principal del almacén","La zona de aparcamiento"],
+    a:1, exp:"El punto de reunión es el lugar preestablecido fuera del edificio donde se concentran todos los evacuados. Permite contabilizar al personal y asegurarse de que nadie queda en el interior." },
 
-<div id="result" class="hidden">
-<h2 id="finalScore"></h2>
-<input type="text" id="playerName" placeholder="Tu nombre">
-<br>
-<button onclick="saveScore()">Guardar puntuación</button>
-<button onclick="backToMenu()">Volver al menú</button>
-</div>
+  // ══════════════ BLOQUE 15: NORMATIVA Y LEGISLACIÓN ══════════════
+  { id:103, block:"Normativa", difficulty:"medio",
+    q:"¿Qué regula el RD 486/1997?",
+    opts:["Los EPIs individuales","Las disposiciones mínimas de seguridad y salud en los lugares de trabajo (iluminación, temperatura, pasillos, orden)","El transporte de mercancías peligrosas","Las señales de seguridad"],
+    a:1, exp:"El RD 486/1997 establece disposiciones mínimas de seguridad y salud en los lugares de trabajo: condiciones constructivas, orden, limpieza, iluminación, temperatura, ventilación y condiciones ambientales." },
+  { id:104, block:"Normativa", difficulty:"medio",
+    q:"¿Qué regula el RD 487/1997?",
+    opts:["La señalización de seguridad","Las disposiciones mínimas sobre manipulación manual de cargas (peso, técnica, evaluación)","Los EPIs","La prevención de incendios"],
+    a:1, exp:"El RD 487/1997 transpone la Directiva 90/269/CEE sobre manipulación manual de cargas. Establece la obligación de evaluar los riesgos y adoptar medidas organizativas y técnicas." },
+  { id:105, block:"Normativa", difficulty:"difícil",
+    q:"¿Qué regula el RD 1215/1997?",
+    opts:["Los EPIs","Las disposiciones mínimas de seguridad y salud para la utilización de equipos de trabajo (maquinaria, carretillas, etc.)","La señalización","Los primeros auxilios"],
+    a:1, exp:"El RD 1215/1997 establece los requisitos mínimos de seguridad para la utilización de equipos de trabajo: mantenimiento, condiciones de utilización, formación del operador, etc." },
+  { id:106, block:"Normativa", difficulty:"medio",
+    q:"¿Qué es el Delegado de Prevención?",
+    opts:["El técnico externo de prevención","El representante de los trabajadores en materia de prevención de riesgos laborales, elegido por y entre los representantes de los trabajadores","El responsable de seguridad de la empresa","El inspector de trabajo"],
+    a:1, exp:"El Delegado de Prevención es elegido por los representantes de los trabajadores y tiene funciones de consulta, información, participación y vigilancia del cumplimiento normativo en PRL." },
+  { id:107, block:"Normativa", difficulty:"difícil",
+    q:"¿Cuándo es obligatorio el Comité de Seguridad y Salud?",
+    opts:["En todas las empresas","En empresas con 50 o más trabajadores","En empresas con 25 o más trabajadores","Solo en empresas con riesgo alto"],
+    a:1, exp:"El Comité de Seguridad y Salud es obligatorio en empresas o centros de trabajo con 50 o más trabajadores. Es un órgano paritario (empresa + trabajadores) de participación en PRL." },
+  { id:108, block:"Normativa", difficulty:"medio",
+    q:"¿Qué obligaciones tiene el TRABAJADOR según la LPRL?",
+    opts:["Solo usar los EPIs que el empresario decida","Velar por su seguridad, usar correctamente EPIs y equipos, informar de riesgos y cooperar con el empresario","No tiene obligaciones, es solo el empresario","Solo asistir a los cursos de formación"],
+    a:1, exp:"Los trabajadores deben: velar por su propia seguridad y la de compañeros, usar correctamente EPIs y equipos, no poner fuera de funcionamiento medidas de seguridad, e informar de riesgos detectados." },
 
-<div id="ranking" class="hidden">
-<h2>🏆 Ranking</h2>
-<div class="ranking" id="rankingList"></div>
-<button onclick="backToMenu()">Volver</button>
-</div>
+  // ══════════════ BLOQUE 16: CARRETILLAS ELEVADORAS ══════════════
+  { id:109, block:"Carretillas", difficulty:"fácil",
+    q:"¿Qué permiso necesita el operador de una carretilla elevadora?",
+    opts:["Carné de conducir de turismo tipo B","Autorización específica de la empresa tras recibir formación teórica y práctica adecuada","Solo experiencia previa","El carné de carretillero no existe, cualquiera puede usarla"],
+    a:1, exp:"El RD 1215/1997 exige que los operadores de carretillas reciban formación adecuada. La empresa debe autorizar por escrito a cada operador tras verificar su formación y capacidad." },
+  { id:110, block:"Carretillas", difficulty:"medio",
+    q:"¿A qué velocidad máxima debe circular una carretilla en el interior del almacén?",
+    opts:["30 km/h","10 km/h en general (reducida a 5 km/h en zonas de peatones)","20 km/h","No hay límite de velocidad interior"],
+    a:1, exp:"La velocidad máxima en interiores suele ser 10 km/h, reduciéndose a 5 km/h en zonas de cruce con peatones, pasillos estrechos y proximidad a muelles. Debe adecuarse a las condiciones." },
+  { id:111, block:"Carretillas", difficulty:"fácil",
+    q:"¿A qué altura deben transportarse las cargas en una carretilla elevadora?",
+    opts:["Lo más alto posible para ver mejor","A unos 20-30 cm del suelo (horquillas bajas) para mayor estabilidad","A la altura de la cintura del operador","No importa la altura durante el transporte"],
+    a:1, exp:"Durante el desplazamiento, las horquillas deben llevarse bajas (20-30 cm del suelo) e inclinadas hacia atrás para garantizar la estabilidad y visibilidad del operador." },
+  { id:112, block:"Carretillas", difficulty:"medio",
+    q:"¿Qué se debe hacer al dejar una carretilla sin vigilancia?",
+    opts:["Dejarla con el motor en marcha para que esté lista","Bajar las horquillas al suelo, sacar la llave, aplicar freno de estacionamiento y aparcar en zona señalizada","Solo aplicar el freno de mano","Solo sacar la llave"],
+    a:1, exp:"Al dejar una carretilla: horquillas en el suelo, retirar la llave, aplicar el freno de estacionamiento, aparcar en la zona habilitada y nunca en pasillos principales." },
+  { id:113, block:"Carretillas", difficulty:"difícil",
+    q:"¿Qué es el 'diagrama de carga' de una carretilla?",
+    opts:["El historial de mantenimiento","El documento que indica la carga máxima en función de la distancia del centro de carga y la altura de elevación","El manual del operador","El registro de accidentes de la carretilla"],
+    a:1, exp:"El diagrama de carga muestra gráficamente cómo varía la capacidad de elevación según la distancia del centro de la carga al talón de la horquilla y la altura de elevación. Debe consultarse siempre." },
+  { id:114, block:"Carretillas", difficulty:"medio",
+    q:"¿Cuándo debe realizarse el mantenimiento de una carretilla elevadora?",
+    opts:["Solo cuando falla algo","Según el plan de mantenimiento del fabricante (revisiones periódicas) y revisión diaria del operador antes del turno","Una vez al año","Solo después de un accidente"],
+    a:1, exp:"El operador debe realizar una revisión diaria pre-turno (niveles, frenos, luces, estado de horquillas). Además, el fabricante establece revisiones periódicas que deben documentarse." },
 
-</div>
+  // ══════════════ BLOQUE 17: ESTANTERÍAS Y ALMACENAJE ══════════════
+  { id:115, block:"Estanterías", difficulty:"fácil",
+    q:"¿Qué debe indicarse en cada estantería del almacén?",
+    opts:["Solo el nombre del fabricante","La carga máxima autorizada por balda, módulo y estructura completa","Solo la fecha de instalación","Solo el material de fabricación"],
+    a:1, exp:"Cada estantería debe tener visible la carga máxima por balda, por módulo (bahía) y total. Superar estos límites puede provocar el colapso de la estructura y graves accidentes." },
+  { id:116, block:"Estanterías", difficulty:"medio",
+    q:"¿Qué norma europea regula las estanterías metálicas de almacén?",
+    opts:["UNE-EN 15512","ISO 9001","RD 486/1997","UNE-EN ISO 45001"],
+    a:0, exp:"La norma UNE-EN 15512 establece los principios de diseño estructural para estanterías metálicas de almacenamiento. Define pruebas de carga, tolerancias y documentación requerida." },
+  { id:117, block:"Estanterías", difficulty:"fácil",
+    q:"¿Qué es el 'picking'?",
+    opts:["El proceso de cargar camiones","La operación de extraer unidades o cantidades menores de unidades completas de una ubicación de almacén para preparar pedidos","El proceso de inventariar mercancía","El proceso de recibir mercancía"],
+    a:1, exp:"El picking (preparación de pedidos) es la operación de recoger productos de las ubicaciones del almacén para preparar pedidos. Genera riesgos específicos de caídas y sobreesfuerzos." },
+  { id:118, block:"Estanterías", difficulty:"difícil",
+    q:"¿Qué debe hacerse ante una estantería dañada (montante doblado)?",
+    opts:["Continuar usándola con cuidado","Señalizar el daño, descargarlo inmediatamente y no volver a cargarla hasta que la repare un especialista o empresa autorizada","Solo avisar al jefe","Usar más protectores de esquina"],
+    a:1, exp:"Una estantería dañada puede colapsar. Debe: señalizarse para evitar su uso, descargar inmediatamente la zona afectada y contactar con el fabricante o instalador para evaluación y reparación." },
 
-<script>
+  // ══════════════ BLOQUE 18: RIESGOS FÍSICOS ══════════════
+  { id:119, block:"Riesgos Físicos", difficulty:"medio",
+    q:"¿A partir de qué nivel de ruido es obligatoria la señalización y el acceso con protección auditiva?",
+    opts:["70 dB(A)","80 dB(A)","85 dB(A)","100 dB(A)"],
+    a:2, exp:"Según el RD 286/2006 sobre ruido: a partir de 85 dB(A) (Valor Superior de Exposición) es obligatorio proporcionar y usar protectores auditivos y señalizar la zona." },
+  { id:120, block:"Riesgos Físicos", difficulty:"fácil",
+    q:"¿Qué riesgo genera la exposición a vibraciones en conductores de carretilla?",
+    opts:["Solo molestias pasajeras","Problemas en la columna vertebral (hernia discal lumbar), síndrome de Raynaud en manos","Solo fatiga muscular","Solo pérdida de audición"],
+    a:1, exp:"La vibración de cuerpo entero (vehículos) daña la columna vertebral. La vibración mano-brazo (herramientas vibratorias) puede causar síndrome de Raynaud (trastorno circulatorio) y daño nervioso." },
+  { id:121, block:"Riesgos Físicos", difficulty:"medio",
+    q:"¿Qué temperatura ambiente se recomienda en un almacén de trabajo normal (no frigorífico)?",
+    opts:["10-15°C","14-25°C para trabajos ligeros (almacén general)","30-35°C","5-10°C"],
+    a:1, exp:"El RD 486/1997 establece rangos de temperatura: 14-25°C para trabajos sedentarios y ligeros (como la mayoría en almacén). Temperaturas extremas aumentan el riesgo de accidente." },
 
-// ==== BASE DE DATOS DE PREGUNTAS ====
-// Aquí puedes pegar las 200+ preguntas
-const questions = [
-{q:"¿Qué es un EPI?",a:["Equipo Personal Individual","Equipo de Protección Individual","Elemento Preventivo Interno"],correct:1},
-{q:"Altura máxima segura sin protección colectiva:",a:["2 metros","1 metro","5 metros"],correct:0},
-{q:"El almacenamiento APQ significa:",a:["Almacenamiento Productos Químicos","Archivo Preventivo","Área Protección Calidad"],correct:0},
+  // ══════════════ BLOQUE 19: HIGIENE INDUSTRIAL ══════════════
+  { id:122, block:"Higiene Industrial", difficulty:"fácil",
+    q:"¿Qué estudia la higiene industrial?",
+    opts:["Solo la limpieza del almacén","La prevención de enfermedades profesionales causadas por agentes físicos, químicos y biológicos del entorno de trabajo","Solo los productos químicos","Solo el ruido y las vibraciones"],
+    a:1, exp:"La higiene industrial identifica, evalúa y controla los contaminantes del ambiente de trabajo (físicos como ruido, químicos como disolventes, biológicos como hongos) para prevenir enfermedades profesionales." },
+  { id:123, block:"Higiene Industrial", difficulty:"medio",
+    q:"¿Qué es el VLA-ED (Valor Límite Ambiental de Exposición Diaria)?",
+    opts:["El precio máximo de un producto químico","La concentración de un agente químico en el aire a la que puede estar expuesto un trabajador 8h/día, 5 días/semana sin efectos adversos","La dosis máxima de medicamento","El límite de carga del almacén"],
+    a:1, exp:"El VLA-ED es la concentración media ponderada en el tiempo (8h) por debajo de la cual no se esperan efectos adversos para la mayoría de los trabajadores. Se publican en el INSST." },
+  { id:124, block:"Higiene Industrial", difficulty:"fácil",
+    q:"¿Para qué sirve la ventilación del almacén?",
+    opts:["Solo para el confort de los trabajadores","Para renovar el aire, eliminar contaminantes (polvo, gases, vapores) y mantener concentraciones por debajo de los límites de exposición","Solo en almacenes con APQ","Solo en verano"],
+    a:1, exp:"La ventilación es fundamental para: renovar el aire, eliminar contaminantes (polvo de palets, gases de carretillas, vapores de APQ), evitar atmósferas explosivas y mantener condiciones aceptables." },
+
+  // ══════════════ BLOQUE 20: CASOS PRÁCTICOS Y SITUACIONES ══════════════
+  { id:125, block:"Casos Prácticos", difficulty:"medio",
+    q:"Un trabajador encuentra una balda de estantería con una flecha hacia abajo (deformada). ¿Qué debe hacer?",
+    opts:["Ignorarlo si la deformación es pequeña","Informar de inmediato al responsable, descargarlo y señalizarlo para que nadie la use","Añadir más refuerzo él mismo","Distribuir el peso entre más baldas"],
+    a:1, exp:"Una balda deformada indica sobrecarga o daño estructural. Debe: comunicar inmediatamente, descargar la balda, señalizarla para evitar su uso y esperar la evaluación de un técnico." },
+  { id:126, block:"Casos Prácticos", difficulty:"fácil",
+    q:"Llegas al almacén y ves un charco de aceite en el pasillo principal. ¿Qué haces primero?",
+    opts:["Pasar por encima con cuidado","Señalizar el derrame con conos o señal de suelo mojado y avisar para que se limpie inmediatamente","Limpiar tú solo sin señalizar","Esperar a que alguien más lo vea"],
+    a:1, exp:"La prioridad es SEÑALIZAR para evitar que otros resbalalen, y avisar para limpiar inmediatamente. Un charco sin señalizar puede causar accidentes graves en segundos." },
+  { id:127, block:"Casos Prácticos", difficulty:"medio",
+    q:"Observas que un compañero lleva la carga elevada a 2 metros mientras recorre el almacén. ¿Es correcto?",
+    opts:["Sí, ve mejor los obstáculos desde arriba","No, la carga debe ir baja (20-30 cm) durante el desplazamiento para mantener la estabilidad y visibilidad","Solo es peligroso si hay peatones","Solo en pasillos estrechos"],
+    a:1, exp:"Circular con carga elevada es muy peligroso: eleva el centro de gravedad, puede provocar el vuelco de la carretilla y reduce la visibilidad del operador. La carga siempre debe ir baja en desplazamiento." },
+  { id:128, block:"Casos Prácticos", difficulty:"medio",
+    q:"En un simulacro de evacuación, ¿el trabajador puede parar para coger sus pertenencias antes de salir?",
+    opts:["Sí, si tarda menos de 2 minutos","No, en una evacuación real los segundos son vitales; las pertenencias no valen una vida","Solo si el responsable lo autoriza","Solo si la alarma no es real"],
+    a:1, exp:"En evacuaciones (simulacro o real) NO se deben recoger pertenencias. Los simulacros entrenan los comportamientos reales; los hábitos del simulacro se reproducen en la emergencia real." },
+  { id:129, block:"Casos Prácticos", difficulty:"difícil",
+    q:"Un compañero pierde el conocimiento súbitamente. No respira. ¿Cuál es la secuencia correcta?",
+    opts:["PLS + llamar al 112","Comprobar consciencia → Pedir ayuda/llamar 112 → Abrir vía aérea → Verificar respiración → Si no respira: RCP 30:2 + DEA","Solo llamar al 112 y esperar","Dar palmadas en la espalda y agua"],
+    a:1, exp:"Cadena de supervivencia: 1) Comprobar consciencia, 2) Pedir ayuda/llamar 112, 3) Abrir vía aérea, 4) Verificar respiración (máx 10 segundos), 5) Si no respira → RCP 30:2 + DEA tan pronto como esté disponible." },
+  { id:130, block:"Casos Prácticos", difficulty:"fácil",
+    q:"¿Para qué sirve el botiquín de empresa?",
+    opts:["Para guardar medicamentos de los trabajadores","Para prestar atención de primeros auxilios básica (curas, vendajes) hasta la llegada de asistencia sanitaria","Para almacenar el material de limpieza","Para guardar documentación de seguridad"],
+    a:1, exp:"El botiquín permite dar primeros auxilios básicos: limpiar y cubrir heridas, inmovilizar, proteger de contaminación. NO debe contener medicamentos (salvo analgésico básico), ya que no somos sanitarios." },
+
+  // ══════════════ BLOQUE 21: ERGONOMÍA AVANZADA ══════════════
+  { id:131, block:"Ergonomía", difficulty:"medio",
+    q:"¿Qué es el 'síndrome del túnel carpiano'?",
+    opts:["Una lesión de rodilla","La compresión del nervio mediano en la muñeca por movimientos repetitivos, que causa dolor y adormecimiento en mano y dedos","Una lesión de hombro","Una enfermedad pulmonar"],
+    a:1, exp:"El síndrome del túnel carpiano es muy frecuente en manipulación manual repetitiva. La compresión del nervio mediano causa dolor, hormigueo y debilidad en los 3 primeros dedos y pulgar." },
+  { id:132, block:"Ergonomía", difficulty:"fácil",
+    q:"¿Qué es una 'lesión musculoesquelética de origen laboral'?",
+    opts:["Cualquier fractura sufrida en el trabajo","Daño en músculos, tendones, articulaciones o nervios causado o agravado por las condiciones de trabajo","Solo hernias de disco","Solo esguinces de tobillo"],
+    a:1, exp:"Las TME laborales son la primera causa de enfermedad profesional en España: hernias discales, tendinitis, bursitis, síndrome del túnel carpiano, etc. Son causadas por posturas, fuerzas y repetición." },
+  { id:133, block:"Ergonomía", difficulty:"medio",
+    q:"¿Cuánto tiempo máximo se recomienda estar de pie de forma estática en el almacén sin pausas?",
+    opts:["8 horas sin límite","No más de 1-2 horas seguidas; se recomiendan pausas o cambios posturales","30 minutos máximo","Solo 15 minutos"],
+    a:1, exp:"El trabajo estático de pie prolongado causa fatiga, varices y dolor lumbar. Se recomiendan cambios posturales cada 1-2 horas, posibilidad de sentarse y suelos antifatiga cuando sea posible." },
+  { id:134, block:"Ergonomía", difficulty:"difícil",
+    q:"¿Qué evalúa el método OWAS?",
+    opts:["El riesgo de incendio","Las posturas de trabajo (tronco, brazos, piernas, carga) para identificar posturas perjudiciales y su frecuencia","El nivel de ruido","La carga térmica del puesto"],
+    a:1, exp:"El método OWAS (Ovako Working posture Analysis System) registra y clasifica las posturas del tronco, brazos y piernas junto con la carga manipulada para evaluar el riesgo musculoesquelético." },
+
+  // ══════════════ BLOQUE 22: GESTIÓN DE RESIDUOS ══════════════
+  { id:135, block:"Residuos Peligrosos", difficulty:"fácil",
+    q:"¿Qué son los residuos peligrosos?",
+    opts:["Solo los productos químicos caducados","Los residuos que presentan propiedades peligrosas (tóxicos, inflamables, corrosivos, etc.) y requieren gestión especializada","Solo los residuos radiactivos","Cualquier residuo de gran volumen"],
+    a:1, exp:"Los residuos peligrosos tienen propiedades como: toxicidad, inflamabilidad, corrosividad, reactividad. Requieren gestión por empresas autorizadas por la administración." },
+  { id:136, block:"Residuos Peligrosos", difficulty:"medio",
+    q:"¿Cómo deben almacenarse temporalmente los residuos peligrosos?",
+    opts:["Mezclados en un único contenedor para ahorrar espacio","En contenedores herméticos etiquetados, separados por incompatibilidades, en zona cubierta y sin acceso no autorizado","En el contenedor general de basura","En el exterior del almacén sin protección"],
+    a:1, exp:"Los residuos peligrosos deben: estar etiquetados, en envases seguros, separados por incompatibilidades, en zona cubierta y protegida, con suelo impermeable y sin mezclar residuos incompatibles." },
+  { id:137, block:"Residuos Peligrosos", difficulty:"difícil",
+    q:"¿Cuánto tiempo máximo puede un productor de residuos peligrosos almacenarlos antes de entregarlos a un gestor autorizado?",
+    opts:["Indefinidamente si los tiene bien almacenados","6 meses máximo (ampliable a 1 año con autorización)","Solo 1 mes","2 años máximo"],
+    a:1, exp:"La Ley 7/2022 de Residuos y Suelos Contaminados establece un máximo de 6 meses de almacenamiento de residuos peligrosos en las instalaciones del productor (ampliable a 1 año con autorización)." },
+
+  // ══════════════ BLOQUE 23: PREVENCIÓN ESPECÍFICA ══════════════
+  { id:138, block:"Prevención Específica", difficulty:"medio",
+    q:"¿Qué es el trabajo en 'zona ATEX'?",
+    opts:["Trabajo en condiciones de temperatura extrema","Trabajo en zonas donde puede existir atmósfera explosiva por gases, vapores o polvo en concentraciones peligrosas","Trabajo en zonas muy ruidosas","Trabajo en zonas de alta radiación"],
+    a:1, exp:"Las zonas ATEX (Atmosphere Explosible) son aquellas donde puede haber mezclas explosivas de gas/vapor/polvo con el aire. Requieren equipos específicos clasificados para uso en ATEX y procedimientos especiales." },
+  { id:139, block:"Prevención Específica", difficulty:"fácil",
+    q:"¿Qué significa 'trabajo en espacios confinados'?",
+    opts:["Trabajo en almacenes muy pequeños","Trabajo en recintos con aberturas limitadas, ventilación natural restringida y no diseñados para ocupación continua (silos, depósitos, fosas)","Trabajo en salas frías","Trabajo en altura"],
+    a:1, exp:"Los espacios confinados (silos, depósitos, alcantarillas, cámaras frigoríficas) tienen acceso difícil, ventilación escasa y pueden tener atmósferas peligrosas (hipóxia, gas tóxico, explosivo). Requieren procedimientos específicos." },
+  { id:140, block:"Prevención Específica", difficulty:"medio",
+    q:"¿Qué medida es imprescindible antes de entrar en un espacio confinado?",
+    opts:["Solo llevar linterna","Medición de la atmósfera interior, permiso de trabajo, equipo de rescate en exterior y EPI adecuado","Solo avisar a un compañero","Solo usar mascarilla básica"],
+    a:1, exp:"Para espacios confinados: medición de O₂ y contaminantes, permiso de trabajo específico, equipo de rescate en el exterior listo, comunicación continua y EPIs adecuados (posiblemente equipo autónomo)." },
+
+  // ══════════════ BLOQUE 24: INSPECCIÓN Y CONTROL ══════════════
+  { id:141, block:"Inspección", difficulty:"fácil",
+    q:"¿Qué es la Inspección de Trabajo?",
+    opts:["La revisión diaria de mercancías","El organismo público que vigila el cumplimiento de la normativa laboral y de prevención de riesgos, pudiendo sancionar los incumplimientos","El departamento de calidad de la empresa","La auditoría interna de seguridad"],
+    a:1, exp:"La Inspección de Trabajo y Seguridad Social (ITSS) es el organismo público que controla el cumplimiento de la normativa laboral. Puede realizar visitas sin previo aviso y proponer sanciones." },
+  { id:142, block:"Inspección", difficulty:"medio",
+    q:"¿Qué es una 'auditoría de prevención de riesgos laborales'?",
+    opts:["Una inspección de la Administración","Una evaluación sistemática, documentada y objetiva del sistema de gestión de la prevención de la empresa para valorar su eficacia y detectar mejoras","Una revisión de los EPIs en uso","Un simulacro de emergencia"],
+    a:1, exp:"Las empresas que no han concertado el servicio de prevención con entidad especializada están obligadas a pasar auditorías externas periódicas para evaluar la eficacia de su sistema preventivo." },
+
+  // ══════════════ BLOQUE 25: PREGUNTAS AVANZADAS INTEGRADAS ══════════════
+  { id:143, block:"Integración", difficulty:"difícil",
+    q:"Si un trabajador observa un riesgo grave e inminente en su puesto, ¿qué derecho tiene según la LPRL?",
+    opts:["Ninguno, debe comunicarlo por escrito antes de actuar","Derecho a interrumpir la actividad y abandonar el lugar de trabajo sin esperar autorización del empresario","Solo puede avisar al jefe y continuar trabajando","Solo puede avisara al delegado de prevención"],
+    a:1, exp:"El Art. 21 LPRL establece que ante riesgo grave e inminente el trabajador puede INTERRUMPIR su actividad y ABANDONAR el puesto de trabajo. Esta decisión no puede acarrear sanción si fue razonada." },
+  { id:144, block:"Integración", difficulty:"difícil",
+    q:"¿Qué obligación tiene el empresario de informar a los trabajadores?",
+    opts:["Solo informar si el trabajador pregunta","Informar de los riesgos generales y específicos de su puesto, las medidas de prevención y de emergencia, de forma comprensible","Solo entregar el manual de EPIs","Informar solo en la incorporación inicial"],
+    a:1, exp:"El empresario tiene obligación legal de informar a cada trabajador de: riesgos de su puesto de trabajo, medidas preventivas aplicables, procedimientos de emergencia y primeros auxilios, de forma clara y comprensible." },
+  { id:145, block:"Integración", difficulty:"medio",
+    q:"¿Qué es el reconocimiento médico en el contexto de la PRL?",
+    opts:["Una visita al médico por iniciativa del trabajador","La vigilancia de la salud que el empresario debe ofrecer (y en algunos casos es obligatoria) para detectar efectos del trabajo sobre la salud","Un trámite burocrático sin valor preventivo","Solo para trabajadores de más de 50 años"],
+    a:1, exp:"La vigilancia de la salud (reconocimientos médicos) es una obligación del empresario. Puede ser obligatoria cuando existe riesgo específico (APQ, ruido, etc.) o voluntaria en otros casos." },
+  { id:146, block:"Integración", difficulty:"difícil",
+    q:"¿Qué es la 'coordinación de actividades empresariales' (CAE)?",
+    opts:["La reunión semanal de los mandos","La obligación de coordinarse en materia de seguridad cuando varias empresas trabajan en un mismo centro de trabajo para prevenir riesgos derivados de la concurrencia","Un requisito solo para empresas grandes","El plan de formación conjunto"],
+    a:1, exp:"El RD 171/2004 sobre CAE regula cómo se coordinan las medidas de PRL cuando coinciden varias empresas (o autónomos) en un mismo centro. El titular del centro tiene responsabilidades específicas." },
+  { id:147, block:"Integración", difficulty:"medio",
+    q:"¿Puede sancionarse a un trabajador por NO usar los EPIs obligatorios?",
+    opts:["No, solo se sanciona al empresario","Sí, el trabajador tiene obligación de usar los EPIs y puede ser sancionado disciplinariamente por incumplirlo","Solo se le puede amonestar verbalmente","No, si el EPI le resulta incómodo"],
+    a:1, exp:"Los trabajadores tienen OBLIGACIÓN legal de usar correctamente los EPIs. Su incumplimiento puede dar lugar a sanción disciplinaria (desde amonestación hasta despido) según el convenio colectivo." },
+  { id:148, block:"Integración", difficulty:"fácil",
+    q:"¿Qué diferencia hay entre un 'peligro' y un 'riesgo'?",
+    opts:["Son sinónimos en PRL","Peligro es la fuente con potencial de causar daño; riesgo es la probabilidad de que ese daño se materialice","Riesgo es más grave que peligro siempre","Peligro solo se usa para incendios"],
+    a:1, exp:"PELIGRO: fuente, situación o acto con potencial de causar daño (una carretilla, una carga suspendida). RIESGO: la combinación de la probabilidad de que ocurra el daño y su severidad." },
+
+  // ══════════════ BLOQUE 26: MÁS PREGUNTAS ══════════════
+  { id:149, block:"Conceptos Generales", difficulty:"fácil",
+    q:"¿Qué es una 'condición de trabajo' según la LPRL?",
+    opts:["Solo el salario del trabajador","Cualquier característica del trabajo que puede influir significativamente en la generación de riesgos para la seguridad y salud","Solo las instalaciones físicas","Solo los horarios y turnos"],
+    a:1, exp:"El Art. 4 LPRL define condición de trabajo como cualquier característica que pueda influir en la generación de riesgos: características del local, equipos, productos, procedimientos y organización." },
+  { id:150, block:"Incendios", difficulty:"medio",
+    q:"¿Qué significan las letras en un extintor (A, B, C, D, F)?",
+    opts:["La marca del fabricante","La clasificación del tipo de fuego para el que es eficaz","El tipo de agente extintor","El peso del extintor"],
+    a:1, exp:"Las letras indican la clase de fuego: A (sólidos), B (líquidos), C (gases), D (metales), F (aceites y grasas de cocina). El número que las acompaña indica la eficacia (p.ej. 21A, 113B)." },
+  { id:151, block:"Carretillas", difficulty:"fácil",
+    q:"¿Qué debe hacer el operador de carretilla al acercarse a un cruce sin visibilidad?",
+    opts:["Acelerar para pasar rápidamente","Reducir la velocidad, tocar el claxon y asomarse con precaución","Continuar a la misma velocidad","Esperar a que pasen peatones"],
+    a:1, exp:"En cruces sin visibilidad: reducir la velocidad, tocar el claxon acústico para avisar y avanzar lentamente con precaución. Los espejos convexos en los cruces mejoran la visibilidad." },
+  { id:152, block:"EPIs", difficulty:"medio",
+    q:"¿Qué indica el marcado CE en un EPI?",
+    opts:["Que está fabricado en Europa","Que cumple los requisitos esenciales de seguridad de la Directiva europea sobre EPIs y ha sido evaluado por organismo notificado","Que es de alta calidad","Que es gratuito para el trabajador"],
+    a:1, exp:"El marcado CE en EPIs indica que el fabricante declara que el producto cumple la normativa europea (Reglamento UE 2016/425). Para EPIs de categoría III (máximo riesgo) requiere organismo notificado." },
+  { id:153, block:"Señalización", difficulty:"difícil",
+    q:"¿Qué es una señal luminosa en el almacén?",
+    opts:["Una señal pintada que refleja la luz","Una señal producida por dispositivo con fuente luminosa (luz de emergencia, baliza luminosa, semáforo de muelle) para indicar peligros o estados","Una señal fluorescente","Un cartel retroiluminado normal"],
+    a:1, exp:"Las señales luminosas (RD 485/1997) deben tener intensidad adecuada para ser visibles, pero no deslumbrantes. Se usan para marcar salidas de emergencia, muelles activos o zonas peligrosas." },
+  { id:154, block:"Diseño del Almacén", difficulty:"medio",
+    q:"¿Qué es un 'muelle de carga enrasado' o 'a nivel'?",
+    opts:["Un muelle al aire libre","Un muelle cuya plataforma está al mismo nivel que el suelo del camión, sin diferencias de cota","Un muelle con rampa permanente","Un muelle para barcos"],
+    a:1, exp:"En muelles a nivel, el suelo del almacén y el suelo de la caja del camión están al mismo nivel, eliminando el riesgo de caída y facilitando el paso de carretillas sin rampa niveladora." },
+  { id:155, block:"Accidentes", difficulty:"difícil",
+    q:"¿Qué es el 'daño derivado del trabajo'?",
+    opts:["Solo los accidentes físicos con lesiones visibles","Enfermedades, patologías o lesiones sufridas con motivo u ocasión del trabajo, incluyendo enfermedades profesionales y accidentes","Solo las bajas de más de 3 días","Solo accidentes dentro del centro de trabajo"],
+    a:1, exp:"La LPRL define daños derivados del trabajo como las enfermedades, patologías o lesiones sufridas con motivo u ocasión del trabajo. Incluye accidentes de trabajo, enfermedades profesionales y otras patologías." },
+  { id:156, block:"Mercancías APQ", difficulty:"fácil",
+    q:"¿Qué es el número ONU de una mercancía peligrosa?",
+    opts:["El código de barras del producto","Un número de 4 dígitos que identifica internacionalmente una sustancia o clase de mercancía peligrosa para el transporte","El precio del producto","El código del proveedor"],
+    a:1, exp:"El número ONU (UN number) es el identificador internacional de 4 dígitos asignado por la ONU a sustancias peligrosas (p.ej. UN1203 = gasolina). Aparece en las placas naranjas de los vehículos ADR." },
+  { id:157, block:"Primeros Auxilios", difficulty:"medio",
+    q:"¿Cuánto tiempo puede sobrevivir el cerebro sin oxígeno (PCR) sin sufrir daños irreversibles?",
+    opts:["30 minutos","15-20 minutos","4-6 minutos","Solo 1-2 minutos"],
+    a:2, exp:"El daño cerebral irreversible comienza a los 4-6 minutos sin oxígeno. Por eso la RCP precoz es vital: cada minuto sin RCP reduce la supervivencia un 10%. Con DEA en 3-5 min, supervivencia >70%." },
+  { id:158, block:"Ergonomía", difficulty:"fácil",
+    q:"¿Qué zona del cuerpo es más vulnerable en la manipulación manual de cargas?",
+    opts:["Hombros","Columna lumbar (zona baja de la espalda)","Rodillas","Muñecas"],
+    a:1, exp:"La columna lumbar (L4-L5, L5-S1) soporta las mayores fuerzas durante la manipulación de cargas. Es la zona más frecuentemente lesionada: hernias discales, lumbalgias, contracturas." },
+  { id:159, block:"Normativa", difficulty:"difícil",
+    q:"¿Qué sanciones contempla la LPRL para las infracciones graves?",
+    opts:["Solo multa de 50€","Multas de 2.046€ a 40.985€ para infracciones graves, y de 40.986€ a 819.780€ para muy graves","Solo amonestación verbal","Solo cierre temporal del almacén"],
+    a:1, exp:"La LPRL (y la LISOS) clasifica infracciones en leves, graves y muy graves. Las graves: 2.046-40.985€. Las muy graves: 40.986-819.780€. Además pueden suspender actividades o retirar ayudas públicas." },
+  { id:160, block:"Casos Prácticos", difficulty:"medio",
+    q:"Ves a un compañero usando la carretilla sin el cinturón de seguridad. ¿Qué debes hacer?",
+    opts:["No decir nada, no es tu responsabilidad","Informarle amistosamente del riesgo (vuelco sin cinturón = muerte) y comunicarlo al responsable si persiste","Solo avisarle una vez","Quitarle las llaves de la carretilla"],
+    a:1, exp:"El cinturón de seguridad en carretillas con cabina previene que el operador sea aplastado por la estructura en caso de vuelco (causa más frecuente de muerte con carretillas). Es obligatorio usarlo." },
+
+  // ══════════════ BLOQUE 27: PREGUNTAS ADICIONALES ══════════════
+  { id:161, block:"Técnicas de Seguridad", difficulty:"medio",
+    q:"¿Qué es un 'permiso de trabajo'?",
+    opts:["El contrato laboral del trabajador","Un documento escrito que autoriza tareas peligrosas (trabajos en altura, espacios confinados, trabajos en caliente) especificando condiciones y medidas de seguridad","El permiso de circulación de la carretilla","La licencia de actividad del almacén"],
+    a:1, exp:"El permiso de trabajo es un sistema de control formal para tareas de alto riesgo. Define quién autoriza, qué medidas se aplican, quién ejecuta y verifica que las condiciones son seguras antes de iniciar." },
+  { id:162, block:"Diseño del Almacén", difficulty:"fácil",
+    q:"¿Qué son los 'guardapiés' o 'zócalos' en las plataformas de trabajo?",
+    opts:["Decoración de las plataformas","Barreras en el borde inferior de las plataformas elevadas para evitar que objetos o herramientas caigan al nivel inferior","Un tipo de EPI para pies","Protectores de las estanterías"],
+    a:1, exp:"Los guardapiés (rodapiés) son listones de al menos 15 cm de altura en el borde de las plataformas de trabajo. Evitan que objetos y herramientas resbalen y caigan sobre trabajadores en niveles inferiores." },
+  { id:163, block:"Evaluación de Riesgos", difficulty:"difícil",
+    q:"¿Qué es el análisis modal de fallos y efectos (AMFE)?",
+    opts:["Un método de investigación de accidentes ya ocurridos","Una técnica analítica preventiva que identifica cómo pueden fallar los componentes/procesos y qué efectos tienen esos fallos","Un método de primeros auxilios","Un sistema de señalización"],
+    a:1, exp:"El AMFE (FMEA en inglés) es una técnica de análisis prospectivo que identifica sistemáticamente los modos de fallo potenciales, sus efectos y sus causas, para priorizarlos y actuar antes de que ocurran." },
+  { id:164, block:"Higiene Industrial", difficulty:"medio",
+    q:"¿Qué es el 'polvo respirable' en el contexto de la higiene industrial?",
+    opts:["Todo el polvo visible en el almacén","Las partículas de diámetro aerodinámico inferior a 10 μm que penetran en los bronquios, y las <4 μm que llegan a los alvéolos","Solo el polvo de madera","Solo el amianto"],
+    a:1, exp:"El polvo respirable (fracción alveolar, <4 μm) es el más peligroso porque alcanza los alvéolos pulmonares. Puede causar enfermedades profesionales como silicosis, asbestosis o neumoconiosis." },
+  { id:165, block:"Incendios", difficulty:"fácil",
+    q:"¿Cómo se usa un extintor de polvo? (Técnica PASS)",
+    opts:["Se lanza directamente al fuego sin quitar el seguro","Quitar el seguro (Pull), apuntar a la base del fuego (Aim), apretar la palanca (Squeeze), barrer de lado a lado (Sweep)","Solo apuntar al humo","Agitar antes de usar siempre"],
+    a:1, exp:"Técnica PASS: P = Pull (quitar pasador), A = Aim (apuntar a la base del fuego, no a las llamas), S = Squeeze (apretar el asa), S = Sweep (barrer de lado a lado manteniendo la distancia de seguridad)." },
+  { id:166, block:"Riesgos Psicosociales", difficulty:"medio",
+    q:"¿Qué es el 'presentismo laboral' y cómo afecta a la seguridad?",
+    opts:["Llegar antes al trabajo para demostrar compromiso","Acudir al trabajo estando enfermo o con problemas de salud, reduciéndose el rendimiento y aumentando el riesgo de accidente","Estar siempre presente en reuniones","Solo afecta al absentismo"],
+    a:1, exp:"El presentismo (ir a trabajar enfermo) reduce la concentración y los reflejos, aumentando el riesgo de errores y accidentes. También puede contagiar enfermedades a compañeros." },
+  { id:167, block:"Carretillas", difficulty:"difícil",
+    q:"¿Qué es la 'estabilidad longitudinal' de una carretilla?",
+    opts:["La capacidad de girar bien","La resistencia de la carretilla a volcar hacia adelante (exceso de carga) o hacia atrás (carga insuficiente o elevación sin carga)","La resistencia al deslizamiento lateral","La capacidad de subir rampas"],
+    a:1, exp:"La estabilidad longitudinal se mantiene mientras el centro de gravedad del conjunto carretilla+carga caiga dentro del triángulo de estabilidad. Cargas excesivas o elevadas demasiado alto la comprometen." },
+  { id:168, block:"Señalización", difficulty:"fácil",
+    q:"¿Qué es una señal acústica de seguridad?",
+    opts:["Una alarma de robo","Una señal codificada emitida por dispositivo (claxon, sirena, timbre) que transmite un mensaje de seguridad (alerta, evacuación, marcha atrás de carretilla)","Una radio de trabajo","La megafonía del almacén"],
+    a:1, exp:"Las señales acústicas (RD 485/1997) deben ser reconocibles y diferenciarse de otros ruidos ambientales. El intermitente de marcha atrás de carretillas o la sirena de evacuación son ejemplos típicos." },
+  { id:169, block:"Emergencias", difficulty:"medio",
+    q:"¿Qué es el 'jefe de emergencia' en un plan de emergencia?",
+    opts:["El bombero que dirige la extinción","El responsable máximo de la emergencia en el centro: decide la evacuación, coordina equipos y es el interlocutor con servicios externos","El delegado de prevención","El trabajador más antiguo"],
+    a:1, exp:"El Jefe de Emergencia (o Director de Emergencia) es quien tiene autoridad para declarar los distintos niveles de emergencia, ordenar la evacuación y coordinar la actuación con los servicios de emergencia externos." },
+  { id:170, block:"Residuos Peligrosos", difficulty:"fácil",
+    q:"¿Se puede mezclar un residuo peligroso con residuos no peligrosos?",
+    opts:["Sí, si la cantidad del peligroso es pequeña","No, la mezcla convierte todo el residuo en peligroso y está prohibida, salvo autorización específica","Solo para residuos líquidos","Solo si el contenedor es de acero"],
+    a:1, exp:"La mezcla de residuos peligrosos con no peligrosos está PROHIBIDA: contamina todo el residuo y dificulta su gestión. Además, si se mezclan residuos peligrosos incompatibles, puede haber reacciones peligrosas." },
+  { id:171, block:"Prevención Específica", difficulty:"medio",
+    q:"¿Qué es el 'trabajo nocturno' a efectos de la normativa laboral?",
+    opts:["Cualquier turno que no sea el de mañana","El realizado entre las 22:00 y las 6:00 horas. Los trabajadores nocturnos tienen limitaciones de horas y derecho a vigilancia de salud específica","Cualquier trabajo de más de 8 horas","Solo el turno de madrugada en logística"],
+    a:1, exp:"El trabajo nocturno (22:00-06:00h) afecta al ritmo circadiano y aumenta el riesgo de accidente. Los trabajadores nocturnos tienen derecho a evaluación de salud y el empresario debe limitar los riesgos específicos." },
+  { id:172, block:"Conceptos Generales", difficulty:"difícil",
+    q:"¿Qué es el 'INSST' y qué función tiene?",
+    opts:["El sindicato de trabajadores de almacén","El Instituto Nacional de Seguridad y Salud en el Trabajo, organismo técnico científico de referencia que apoya a las administraciones en PRL","La Inspección de Trabajo","El registro oficial de EPIs"],
+    a:1, exp:"El INSST (antes INSHT) es el organismo técnico científico de la Administración General del Estado en materia de PRL. Elabora guías técnicas, Notas Técnicas de Prevención (NTP), realiza estudios e imparte formación." },
+  { id:173, block:"Carga y Descarga", difficulty:"fácil",
+    q:"¿Qué debe comprobarse antes de iniciar la carga/descarga de un camión cisterna con APQ?",
+    opts:["Solo que el camión esté aparcado","Que el camión esté calzado, conectado a tierra (antistático), que la zona esté señalizada y que se disponga de la FDS del producto","Solo verificar la documentación del transportista","Que haya suficiente luz natural"],
+    a:1, exp:"Para cisternas con APQ: calzar ruedas, conectar cable de tierra para evitar electricidad estática (riesgo de ignición), señalizar la zona, tener FDS a mano, usar EPIs específicos y evitar llamas o chispas." },
+  { id:174, block:"Técnicas de Seguridad", difficulty:"fácil",
+    q:"¿Qué es el 'análisis de las condiciones de trabajo'?",
+    opts:["La evaluación del salario","La identificación y valoración de los factores del entorno laboral (físicos, químicos, organizativos) que pueden generar riesgos para la salud","El análisis del rendimiento del trabajador","La inspección de la mercancía"],
+    a:1, exp:"El análisis de condiciones de trabajo examina: lugar de trabajo, equipos, productos, procedimientos y organización para identificar todos los factores de riesgo antes de evaluar y controlar." },
+  { id:175, block:"Primeros Auxilios", difficulty:"difícil",
+    q:"¿Qué es el 'síndrome de aplastamiento' o síndrome de Bywaters?",
+    opts:["Una lesión por caída de altura","La lesión grave causada por compresión prolongada de músculos que libera mioglobina al torrente sanguíneo, pudiendo causar fallo renal agudo","Un tipo de fractura de columna","Una lesión por vibración"],
+    a:1, exp:"El síndrome de aplastamiento ocurre cuando un músculo queda comprimido largo tiempo (p.ej. bajo una estantería caída). Al liberar la presión, la mioglobina y toxinas inundan la sangre pudiendo causar fallo renal. Requiere actuación médica urgente." },
+  { id:176, block:"EPIs", difficulty:"fácil",
+    q:"¿Qué protege el 'protector de rodillas'?",
+    opts:["Solo es para trabajo de construcción","Protege las rodillas en trabajos que requieren arrodillarse en el suelo del almacén (picking bajo nivel)","Es obligatorio en todas las tareas","Solo para trabajo en frío"],
+    a:1, exp:"Los protectores de rodilla son necesarios en tareas de picking de nivel bajo o cualquier trabajo que requiera arrodillarse sobre superficies duras. Previenen bursitis y lesiones en la rótula." },
+  { id:177, block:"Ergonomía", difficulty:"fácil",
+    q:"¿Qué es el 'diseño ergonómico del puesto de trabajo'?",
+    opts:["Poner una silla cómoda","Adaptar las dimensiones, herramientas y organización del puesto a las características físicas del trabajador para minimizar el esfuerzo y el riesgo de lesión","Solo ajustar la altura de la mesa","Solo aplicar 5S"],
+    a:1, exp:"El diseño ergonómico incluye: ajuste de alturas de trabajo, distancias de alcance, iluminación, herramientas adaptadas, organización de materiales y todo lo que reduce la carga física y el riesgo de TME." },
+  { id:178, block:"Evaluación de Riesgos", difficulty:"medio",
+    q:"¿Cuándo debe realizarse la evaluación inicial de riesgos de un nuevo puesto de trabajo?",
+    opts:["A los 6 meses de que el trabajador esté en el puesto","Antes de que el trabajador comience a trabajar en ese puesto","Solo si el trabajador lo solicita","En la primera revisión médica"],
+    a:1, exp:"La evaluación de riesgos debe realizarse ANTES del inicio de la actividad. En puestos nuevos o con cambios, debe evaluarse antes de que el trabajador comience, no después de que aparezcan problemas." },
+  { id:179, block:"Higiene Industrial", difficulty:"difícil",
+    q:"¿Qué es el monóxido de carbono (CO) y por qué es peligroso en almacenes?",
+    opts:["Un gas con olor intenso que avisa de su presencia","Un gas inodoro, incoloro e insípido producido por la combustión incompleta (carretillas térmicas en interior) que se une a la hemoglobina impidiendo el transporte de oxígeno","Un gas que solo afecta a asmáticos","Solo peligroso en grandes cantidades visibles"],
+    a:1, exp:"El CO es indetectable por los sentidos, por eso es tan peligroso. Las carretillas de gasolina/GLP en almacenes cerrados producen CO. A altas concentraciones causa inconsciencia y muerte. Deben usarse detectores." },
+  { id:180, block:"Señalización", difficulty:"medio",
+    q:"¿Cuándo deben usarse señales de 'prohibido el paso' en el almacén?",
+    opts:["Solo en entradas principales","En zonas con riesgos específicos (carga/descarga activa, zona de APQ, área de mantenimiento) para impedir el acceso de personal no autorizado","Solo en zonas de oficinas","En todos los pasillos secundarios"],
+    a:1, exp:"Las señales de prohibición de paso deben colocarse en zonas donde el acceso genere riesgos para personal no autorizado: muelles activos, zonas ATEX, salas eléctricas, depósitos de APQ, etc." },
+  // 181-200: PREGUNTAS FINALES
+  { id:181, block:"Accidentes", difficulty:"fácil",
+    q:"¿Qué es un accidente 'en misión' o 'en comisión de servicio'?",
+    opts:["Un accidente en el almacén durante la jornada normal","Un accidente sufrido mientras el trabajador se desplaza por motivos laborales (visitas a clientes, entregas, viajes de empresa)","Un accidente de transporte de mercancías","Un accidente durante formación interna"],
+    a:1, exp:"El accidente en misión ocurre cuando el trabajador se desplaza por razones del trabajo (no es el trayecto habitual casa-trabajo). Está cubierto como accidente laboral siempre que el desplazamiento sea por causa laboral." },
+  { id:182, block:"Diseño del Almacén", difficulty:"difícil",
+    q:"¿Qué es un 'cargador de baterías de carretillas' y qué riesgos implica?",
+    opts:["Un equipo sin riesgos significativos","Un espacio con cargadores que genera hidrógeno (gas explosivo) durante la carga de baterías plomo-ácido, requiriendo ventilación forzada y prohibición de llamas","Solo riesgo eléctrico sin gas","Un equipo solo presente en almacenes grandes"],
+    a:1, exp:"La sala de carga de baterías plomo-ácido produce HIDRÓGENO (gas muy inflamable y explosivo). Requiere: ventilación forzada, prohibición absoluta de fumar/llamas, instalación eléctrica ATEX y procedimientos estrictos." },
+  { id:183, block:"Normativa", difficulty:"fácil",
+    q:"¿Qué es la 'formación en prevención de riesgos laborales'?",
+    opts:["Un curso anual obligatorio igual para todos","La formación teórico-práctica, suficiente y adecuada para el puesto de trabajo concreto, que el empresario debe dar al contratar y ante cambios significativos","Solo para mandos intermedios","Solo para trabajadores con más de 1 año de antigüedad"],
+    a:1, exp:"La formación en PRL debe ser: adecuada al puesto de trabajo específico, teórica y práctica, en horario laboral y a cargo del empresario. Debe repetirse ante cambios o nuevos riesgos detectados." },
+  { id:184, block:"Emergencias", difficulty:"medio",
+    q:"¿Qué es el 'protocolo de actuación ante derrame de APQ'?",
+    opts:["Una lista de teléfonos de proveedores","El procedimiento específico que indica: cómo contener, absorber, eliminar y notificar un derrame de producto químico, con los EPIs necesarios en cada fase","Solo la señalización de la zona afectada","Solo avisar a los bomberos siempre"],
+    a:1, exp:"El protocolo de derrame APQ incluye: EVACUACIÓN, VENTILACIÓN, CONSULTAR FDS, USAR EPIs adecuados, CONTENER (con absorbente adecuado), RECOGIDA como residuo peligroso y NOTIFICACIÓN. El absorbente debe ser compatible con el producto." },
+  { id:185, block:"Casos Prácticos", difficulty:"difícil",
+    q:"Encuentras a un compañero inconsciente entre estanterías y huele a gases. ¿Cuál es la secuencia correcta?",
+    opts:["Entrar inmediatamente a rescatarlo sin nada","NO entrar sin EPI adecuado. Ventilar la zona si es posible, llamar al 112, usar equipo de respiración autónoma para el rescate. El rescatador sin protección puede convertirse en segunda víctima","Arrastrar al compañero sin EPI, la situación es urgente","Solo gritar para que despierte"],
+    a:1, exp:"¡SEGUNDA VÍCTIMA! El mayor error en rescates de espacios confinados/atmósferas tóxicas es entrar sin protección. Primero: llamar al 112, ventilar si es posible, usar equipo autónomo. El rescatador sin equipo muere también." },
+  { id:186, block:"Carretillas", difficulty:"fácil",
+    q:"¿Qué comprobación debe hacer el operador de carretilla ANTES de empezar el turno?",
+    opts:["Ninguna, el mantenimiento es responsabilidad del taller","Niveles de aceite/batería, estado de frenos, luces, bocina, estado de horquillas y neumáticos, y cualquier anomalía que comunica al responsable","Solo comprobar el nivel de combustible","Solo verificar que la llave esté puesta"],
+    a:1, exp:"La revisión pre-operacional diaria debe incluir: batería/combustible, frenos (pie y estacionamiento), dirección, luces, bocina, estado de horquillas y mástil, fugas de aceite y presión de neumáticos." },
+  { id:187, block:"EPIs", difficulty:"difícil",
+    q:"¿Cuáles son los EPIs de 'categoría III' y qué características tienen?",
+    opts:["Los más baratos y simples","Los que protegen contra riesgos de muerte o de lesiones graves e irreversibles: arneses, equipos autónomos, EPIs anticaídas; requieren organismo notificado para certificación","Solo los guantes de cuero","Los mismos que los de categoría I"],
+    a:1, exp:"Los EPIs de categoría III protegen contra los riesgos más graves (caídas de altura, productos químicos cancerígenos, temperatura extrema, radiación ionizante). Requieren certificación por organismo notificado y formación específica." },
+  { id:188, block:"Conceptos Generales", difficulty:"medio",
+    q:"¿Qué es el 'análisis de árbol de fallos' (AAF)?",
+    opts:["Un registro de incidentes con carretillas","Una técnica deductiva que parte de un suceso no deseado y busca sistemáticamente las causas y combinaciones de causas que pueden provocarlo","Una técnica de carga de estanterías","Un método de control de inventario"],
+    a:1, exp:"El Árbol de Fallos (FTA) es una técnica de análisis deductivo: parte del accidente (top event) y desciende identificando causas y combinaciones de causas. Útil para analizar sistemas complejos y establecer barreras." },
+  { id:189, block:"Incendios", difficulty:"medio",
+    q:"¿Qué es un 'compartimento de incendio'?",
+    opts:["Una sala para guardar extintores","Un sector del almacén delimitado por elementos constructivos resistentes al fuego (paredes, forjados, puertas RF) para contener el fuego y no permitir su propagación","Una zona de alta temperatura","Una zona exclusiva para APQ inflamables"],
+    a:1, exp:"Los compartimentos de incendio (sectores de incendio) son zonas delimitadas por elementos EI (estancos al fuego) que limitan la propagación del incendio. Las puertas cortafuegos deben mantenerse cerradas." },
+  { id:190, block:"Prevención Específica", difficulty:"medio",
+    q:"¿Qué es el 'trabajo a turnos' y qué riesgos específicos conlleva?",
+    opts:["Solo trabajar más horas","Un sistema de organización del trabajo donde diferentes grupos de trabajadores trabajan en distintos horarios, con riesgos de alteración del ritmo circadiano, fatiga y problemas sociales","Solo el turno de noche","Solo trabajos en almacenes grandes"],
+    a:1, exp:"El trabajo a turnos altera el ritmo circadiano, afecta la calidad del sueño, el sistema inmune, la vida social y familiar, y aumenta el riesgo de errores y accidentes. Requiere vigilancia de la salud específica." },
+  { id:191, block:"Evaluación de Riesgos", difficulty:"fácil",
+    q:"¿Qué es un 'plan de acción preventivo' tras la evaluación de riesgos?",
+    opts:["El listado de EPIs de la empresa","El documento que recoge las medidas preventivas a implantar, priorizadas, con responsables y plazos de ejecución, como resultado de la evaluación de riesgos","El plan de emergencia","El registro de accidentes"],
+    a:1, exp:"El plan de acción es el resultado práctico de la evaluación: lista qué medidas tomar, quién es responsable de implantarlas, en qué plazo y cómo verificar su eficacia. Es la hoja de ruta de la mejora continua." },
+  { id:192, block:"Normativa", difficulty:"difícil",
+    q:"¿Qué obligaciones tiene el empresario respecto a los trabajadores especialmente sensibles?",
+    opts:["No tiene obligaciones especiales","Tener en cuenta las características de los trabajadores especialmente sensibles (embarazo, discapacidad, jóvenes, temporales) en la evaluación y adaptar el puesto o cambiar de destino","Solo informarles de los riesgos","Solo reducir su carga de trabajo"],
+    a:1, exp:"Los trabajadores especialmente sensibles (art. 25 LPRL) requieren protección específica: embarazadas, jóvenes, discapacitados y trabajadores temporales deben ser considerados en la evaluación con medidas adaptadas a su situación." },
+  { id:193, block:"Higiene Industrial", difficulty:"medio",
+    q:"¿Qué medidas se adoptan frente al polvo de madera en almacenes de madera?",
+    opts:["Solo limpieza semanal","Aspiración en origen, uso de mascarilla FFP3 (polvo duro de madera), ventilación y, si supera los VLA, vigilancia médica específica (posible cancerígeno)","Solo señalizar la zona","Solo abrir ventanas"],
+    a:1, exp:"El polvo de madera dura (roble, haya) está clasificado como cancerígeno (carcinogénico del seno nasal). Requiere: medición, aspiración en origen, mascarilla FFP3, vigilancia médica y comunicación a la autoridad sanitaria." },
+  { id:194, block:"Casos Prácticos", difficulty:"fácil",
+    q:"¿Qué haces si un extintor que necesitas está fuera de su soporte y en el suelo?",
+    opts:["Lo usas si el fuego es pequeño","Primero llamas al 112 y evacúas; nunca debes usar un extintor del que no conoces el estado ni si ha sido manipulado","Lo colocas en su soporte y avisas al responsable para verificar su estado antes de cualquier uso","Lo ignoras, seguro que está bien"],
+    a:1, exp:"Un extintor fuera de su soporte puede haber perdido presión o ser de otro tipo. Debes avisar al responsable para que un especialista lo compruebe antes de su uso. Registrar la incidencia." },
+  { id:195, block:"Mercancías APQ", difficulty:"medium",
+    q:"¿Cuál es la diferencia entre un 'punto de inflamación' y un 'punto de ignición'?",
+    opts:["Son exactamente lo mismo","Punto de inflamación: temperatura mínima para que los vapores se inflamen con llama pero no sostengan la combustión; punto de ignición: temperatura para combustión sostenida sin llama externa","El punto de ignición es siempre menor","El punto de inflamación solo se usa para gases"],
+    a:1, exp:"Punto de inflamación (flash point): la temperatura mínima a la que el líquido produce vapores suficientes para inflamarse momentáneamente al acercar una llama. Punto de ignición: temperatura a la que se produce combustión espontánea y sostenida sin llama externa." },
+  { id:196, block:"Accidentes", difficulty:"difícil",
+    q:"¿Qué es la 'investigación de las causas raíz' de un accidente?",
+    opts:["Buscar al culpable del accidente","Ir más allá de las causas inmediatas para identificar las causas básicas y raíz (de gestión, organizativas o culturales) que permitieron que el accidente ocurriera","Solo describir el accidente","Solo revisar las cámaras de seguridad"],
+    a:1, exp:"El análisis de causas raíz busca el origen profundo: causas inmediatas (actos y condiciones inseguras), básicas (factores personales y de trabajo) y raíz (fallos del sistema de gestión). Solo atacando la raíz se previene la repetición." },
+  { id:197, block:"Emergencias", difficulty:"fácil",
+    q:"¿Con qué frecuencia deben realizarse los simulacros de evacuación?",
+    opts:["Solo cuando la empresa lo considere oportuno","Al menos una vez al año para detectar fallos del plan de emergencia y entrenar al personal","Cada 5 años","Solo al inaugurar un nuevo almacén"],
+    a:1, exp:"Los simulacros deben realizarse con la periodicidad que establezca el plan de emergencia (mínimo anual). Permiten detectar fallos del plan (cuellos de botella, puertas bloqueadas) y entrenar la respuesta del personal." },
+  { id:198, block:"Integración", difficulty:"medio",
+    q:"¿Qué es la 'mejora continua' en la gestión de la prevención?",
+    opts:["Aumentar el número de EPIs cada año","El proceso sistemático de revisar, evaluar y mejorar constantemente el sistema de gestión de la PRL para alcanzar niveles crecientes de seguridad y salud","Contratar más personal de seguridad","Solo actualizar la documentación"],
+    a:1, exp:"La mejora continua (PDCA: Planificar-Hacer-Verificar-Actuar) es el motor de un sistema de gestión de la PRL. Implica revisar los objetivos, medir resultados y actuar para superar continuamente el nivel alcanzado." },
+  { id:199, block:"Diseño del Almacén", difficulty:"medio",
+    q:"¿Qué es la 'carga de fuego' de un almacén?",
+    opts:["El peso máximo de la mercancía","La cantidad de energía calorífica por unidad de área que puede liberar el almacén en caso de incendio, según los materiales almacenados. Determina los requisitos de protección contra incendios","La carga eléctrica de las instalaciones","La carga de la estructura del edificio"],
+    a:1, exp:"La carga de fuego (en MJ/m² o Mcal/m²) determina la peligrosidad del incendio potencial. A mayor carga de fuego, más exigentes son los requisitos de resistencia al fuego de la estructura y los sistemas de extinción." },
+  { id:200, block:"Conceptos Generales", difficulty:"difícil",
+    q:"¿Qué es la norma ISO 45001 y qué aporta a la gestión de la seguridad?",
+    opts:["Una norma de calidad de productos","El estándar internacional de sistemas de gestión de la seguridad y salud en el trabajo, que proporciona un marco para eliminar riesgos y mejorar continuamente","Una normativa sobre transporte de mercancías","Una norma solo para empresas con más de 500 trabajadores"],
+    a:1, exp:"ISO 45001:2018 es el estándar internacional para Sistemas de Gestión de SST. Sustituyó a OHSAS 18001. Proporciona un marco integral: contexto, liderazgo, planificación, operación, evaluación y mejora continua." },
 ];
 
-// Para simular muchas:
-for(let i=0;i<200;i++){
-questions.push({
-q:"Pregunta simulada nº "+(i+1),
-a:["Opción A","Opción B","Opción C"],
-correct:Math.floor(Math.random()*3)
-});
+const BLOCKS = [...new Set(ALL_QUESTIONS.map(q => q.block))];
+const BLOCK_COLORS = {
+  "Conceptos Generales":"#1A3A5C","Técnicas de Seguridad":"#2D6A4F","EPIs":"#7B2D8B",
+  "Señalización":"#B7791F","Diseño del Almacén":"#065A82","Accidentes":"#D62828",
+  "Evaluación de Riesgos":"#1A5276","Carga y Descarga":"#784212","Mercancías APQ":"#6C3483",
+  "Ergonomía":"#117A65","Riesgos Psicosociales":"#1F618D","Incendios":"#C0392B",
+  "Primeros Auxilios":"#1E8449","Emergencias":"#D35400","Normativa":"#2E4057",
+  "Carretillas":"#0E6655","Estanterías":"#7D6608","Riesgos Físicos":"#5B2333",
+  "Higiene Industrial":"#1A5276","Casos Prácticos":"#E85D04","Integración":"#1A3A5C",
+  "Residuos Peligrosos":"#4A235A","Prevención Específica":"#1B4F72","Inspección":"#283747",
+};
+
+const DIFF_COLORS = { fácil:"#22c55e", medio:"#f59e0b", difícil:"#ef4444" };
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-let current=0;
-let score=0;
-let totalQuestions=20;
-let timerInterval;
-let timeLeft=60;
-let mode="exam";
-let selectedQuestions=[];
+// ─── ACHIEVEMENT SYSTEM ────────────────────────────────────────────────────────
+const ACHIEVEMENTS = [
+  { id:"first_correct", icon:"⚡", name:"Primera Chispa", desc:"Primera respuesta correcta", condition:(s)=>s.correct===1 },
+  { id:"streak5", icon:"🔥", name:"En Llamas", desc:"5 respuestas correctas seguidas", condition:(s)=>s.streak===5 },
+  { id:"streak10", icon:"🌋", name:"Imparable", desc:"10 correctas seguidas", condition:(s)=>s.streak===10 },
+  { id:"perfect_block", icon:"💎", name:"Maestro del Bloque", desc:"Todas correctas en un bloque", condition:(s)=>s.perfectBlock },
+  { id:"half_done", icon:"🏃", name:"Medio Camino", desc:"Responde 100 preguntas", condition:(s)=>s.answered===100 },
+  { id:"done", icon:"🏆", name:"Expediente Completo", desc:"Responde las 200 preguntas", condition:(s)=>s.answered===200 },
+  { id:"speed", icon:"⚡", name:"Rayo", desc:"Responde en menos de 3 segundos", condition:(s)=>s.lastTime<3 },
+  { id:"pct90", icon:"🎓", name:"Casi Perfecto", desc:"90% de acierto con 50+ preguntas", condition:(s)=>s.answered>=50&&(s.correct/s.answered)>=0.9 },
+];
 
-function shuffle(array){
-return array.sort(()=>Math.random()-0.5);
+// ─── LEADERBOARD DATA ──────────────────────────────────────────────────────────
+const LEADERBOARD_KEY = "uf0928_leaderboard";
+
+async function getLeaderboard() {
+  try {
+    const r = await window.storage.get(LEADERBOARD_KEY, true);
+    return r ? JSON.parse(r.value) : [];
+  } catch { return []; }
+}
+async function saveScore(name, score, total) {
+  try {
+    const lb = await getLeaderboard();
+    const existing = lb.findIndex(e=>e.name===name);
+    const pct = Math.round((score/total)*100);
+    if(existing>=0) { if(pct>lb[existing].pct) lb[existing]={name,score,total,pct,date:new Date().toLocaleDateString("es-ES")}; }
+    else lb.push({name,score,total,pct,date:new Date().toLocaleDateString("es-ES")});
+    lb.sort((a,b)=>b.pct-a.pct);
+    await window.storage.set(LEADERBOARD_KEY, JSON.stringify(lb.slice(0,20)), true);
+  } catch {}
 }
 
-function startExam(){
-mode="exam";
-totalQuestions=20;
-selectedQuestions=shuffle([...questions]).slice(0,totalQuestions);
-startGame();
-}
+// ─── MAIN APP ──────────────────────────────────────────────────────────────────
+export default function App() {
+  const [screen, setScreen] = useState("menu"); // menu | config | quiz | results | leaderboard
+  const [config, setConfig] = useState({ blocks: [], difficulty: [], count: 20, mode:"exam" });
+  const [questions, setQuestions] = useState([]);
+  const [qIdx, setQIdx] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [answered, setAnswered] = useState(false);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [wrongIds, setWrongIds] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [newAchievement, setNewAchievement] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [qTime, setQTime] = useState(null);
+  const [timer, setTimer] = useState(0);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [playerName, setPlayerName] = useState("");
+  const [nameSaved, setNameSaved] = useState(false);
+  const [blockStats, setBlockStats] = useState({});
+  const [reviewMode, setReviewMode] = useState(false);
+  const [reviewQuestions, setReviewQuestions] = useState([]);
+  const [perfectBlock, setPerfectBlock] = useState(false);
+  const timerRef = useRef(null);
 
-function startTime(){
-mode="time";
-timeLeft=60;
-score=0;
-selectedQuestions=shuffle([...questions]);
-startGame();
-startTimer();
-}
+  const currentQ = questions[qIdx];
+  const progress = questions.length > 0 ? ((qIdx) / questions.length) * 100 : 0;
 
-function startGame(){
-document.getElementById("menu").classList.add("hidden");
-document.getElementById("result").classList.add("hidden");
-document.getElementById("ranking").classList.add("hidden");
-document.getElementById("game").classList.remove("hidden");
-current=0;
-score=0;
-showQuestion();
-}
+  useEffect(() => {
+    getLeaderboard().then(setLeaderboard);
+  }, []);
 
-function showQuestion(){
-if(mode==="exam" && current>=totalQuestions){
-endGame();
-return;
-}
-if(mode==="time" && timeLeft<=0){
-endGame();
-return;
-}
+  useEffect(() => {
+    if (screen === "quiz" && !answered) {
+      setQTime(Date.now());
+      timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [qIdx, screen, answered]);
 
-let q=selectedQuestions[current];
-document.getElementById("question").innerText=q.q;
-let optionsDiv=document.getElementById("options");
-optionsDiv.innerHTML="";
+  function checkAchievements(stats) {
+    const newOnes = ACHIEVEMENTS.filter(a =>
+      !achievements.find(x=>x.id===a.id) && a.condition(stats)
+    );
+    if (newOnes.length > 0) {
+      setAchievements(prev => [...prev, ...newOnes]);
+      setNewAchievement(newOnes[0]);
+      setTimeout(() => setNewAchievement(null), 3500);
+    }
+  }
 
-q.a.forEach((opt,i)=>{
-let btn=document.createElement("button");
-btn.innerText=opt;
-btn.className="option";
-btn.onclick=()=>checkAnswer(i);
-optionsDiv.appendChild(btn);
-});
-}
+  function startQuiz() {
+    let pool = ALL_QUESTIONS;
+    if (config.blocks.length > 0) pool = pool.filter(q => config.blocks.includes(q.block));
+    if (config.difficulty.length > 0) pool = pool.filter(q => config.difficulty.includes(q.difficulty));
+    const selected = shuffle(pool).slice(0, Math.min(config.count, pool.length));
+    setQuestions(selected);
+    setQIdx(0); setSelected(null); setAnswered(false);
+    setScore(0); setStreak(0); setMaxStreak(0); setWrongIds([]);
+    setAchievements([]); setBlockStats({}); setPerfectBlock(false);
+    setReviewMode(false);
+    setStartTime(Date.now()); setTimer(0);
+    setScreen("quiz");
+  }
 
-function checkAnswer(index){
-let correct=selectedQuestions[current].correct;
-if(index===correct) score++;
-current++;
-showQuestion();
-}
+  function startReview() {
+    const rq = ALL_QUESTIONS.filter(q => wrongIds.includes(q.id));
+    setReviewQuestions(rq);
+    setQuestions(shuffle(rq));
+    setQIdx(0); setSelected(null); setAnswered(false);
+    setReviewMode(true);
+    setScreen("quiz");
+  }
 
-function startTimer(){
-document.getElementById("timer").innerText="⏳ 60s";
-timerInterval=setInterval(()=>{
-timeLeft--;
-document.getElementById("timer").innerText="⏳ "+timeLeft+"s";
-if(timeLeft<=0){
-clearInterval(timerInterval);
-endGame();
-}
-},1000);
-}
+  function handleSelect(idx) {
+    if (answered) return;
+    clearInterval(timerRef.current);
+    const elapsed = qTime ? (Date.now() - qTime) / 1000 : 99;
+    setSelected(idx);
+    setAnswered(true);
+    const isCorrect = idx === currentQ.a;
+    const newStreak = isCorrect ? streak + 1 : 0;
+    const newScore = isCorrect ? score + 1 : score;
+    const newMax = Math.max(maxStreak, newStreak);
+    const newWrong = isCorrect ? wrongIds : [...wrongIds, currentQ.id];
 
-function endGame(){
-clearInterval(timerInterval);
-document.getElementById("game").classList.add("hidden");
-document.getElementById("result").classList.remove("hidden");
-document.getElementById("finalScore").innerText="Puntuación: "+score;
-}
+    if (isCorrect) setScore(newScore);
+    setStreak(newStreak);
+    setMaxStreak(newMax);
+    if (!isCorrect) setWrongIds(newWrong);
 
-function saveScore(){
-let name=document.getElementById("playerName").value;
-if(!name) return;
-let ranking=JSON.parse(localStorage.getItem("ranking"))||[];
-ranking.push({name,score});
-ranking.sort((a,b)=>b.score-a.score);
-ranking=ranking.slice(0,10);
-localStorage.setItem("ranking",JSON.stringify(ranking));
-backToMenu();
-}
+    // Block stats
+    const bs = {...blockStats};
+    if (!bs[currentQ.block]) bs[currentQ.block] = {correct:0, total:0};
+    bs[currentQ.block].total++;
+    if (isCorrect) bs[currentQ.block].correct++;
+    setBlockStats(bs);
+    const isBlockPerfect = bs[currentQ.block].correct === bs[currentQ.block].total && bs[currentQ.block].total >= 3;
+    if (isBlockPerfect) setPerfectBlock(true);
 
-function showRanking(){
-document.getElementById("menu").classList.add("hidden");
-document.getElementById("ranking").classList.remove("hidden");
-let ranking=JSON.parse(localStorage.getItem("ranking"))||[];
-let list="";
-ranking.forEach((r,i)=>{
-list+= (i+1)+". "+r.name+" - "+r.score+"<br>";
-});
-document.getElementById("rankingList").innerHTML=list||"Sin puntuaciones aún.";
-}
+    checkAchievements({
+      correct: newScore, streak: newStreak, answered: qIdx + 1,
+      lastTime: elapsed, perfectBlock: isBlockPerfect
+    });
+  }
 
-function backToMenu(){
-document.getElementById("menu").classList.remove("hidden");
-document.getElementById("game").classList.add("hidden");
-document.getElementById("result").classList.add("hidden");
-document.getElementById("ranking").classList.add("hidden");
-}
+  function handleNext() {
+    if (qIdx < questions.length - 1) {
+      setQIdx(i => i + 1);
+      setSelected(null);
+      setAnswered(false);
+      setTimer(0);
+    } else {
+      if (playerName && !nameSaved) {
+        saveScore(playerName, score, questions.length);
+        setNameSaved(true);
+        getLeaderboard().then(setLeaderboard);
+      }
+      setScreen("results");
+    }
+  }
 
-</script>
-</body>
-</html>
+  const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
+  const totalTime = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+
+  // ─── SCREEN: MENU ──────────────────────────────────────────────────────────────
+  if (screen === "menu") {
+    return (
+      <div style={{minHeight:"100vh",background:"#0a0a0f",color:"white",fontFamily:"'Trebuchet MS',sans-serif",display:"flex",flexDirection:"column"}}>
+        {/* Hero */}
+        <div style={{position:"relative",overflow:"hidden",padding:"60px 24px 40px",textAlign:"center",background:"linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 50%,#0a0a0f 100%)"}}>
+          {/* Grid overlay */}
+          <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(232,93,4,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(232,93,4,0.08) 1px,transparent 1px)",backgroundSize:"40px 40px",pointerEvents:"none"}} />
+          <div style={{position:"relative",zIndex:1}}>
+            <div style={{display:"inline-block",background:"#E85D04",color:"white",fontWeight:900,fontSize:11,letterSpacing:4,padding:"6px 16px",borderRadius:2,marginBottom:20,textTransform:"uppercase"}}>
+              UF0928 · COML0309
+            </div>
+            <h1 style={{fontSize:"clamp(32px,6vw,64px)",fontWeight:900,margin:"0 0 8px",lineHeight:1.1,textTransform:"uppercase",letterSpacing:-1}}>
+              <span style={{color:"white"}}>ALMACÉN</span><br/>
+              <span style={{color:"#E85D04"}}>SEGURO</span>
+            </h1>
+            <p style={{color:"#9ca3af",fontSize:16,margin:"0 0 32px"}}>
+              200 preguntas · Prevención de Riesgos Laborales
+            </p>
+            <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:32}}>
+              {["200 preguntas","24 bloques temáticos","3 niveles dificultad","Ranking compartido"].map(t=>(
+                <span key={t} style={{background:"rgba(232,93,4,0.15)",border:"1px solid rgba(232,93,4,0.3)",color:"#f97316",padding:"6px 14px",borderRadius:4,fontSize:13,fontWeight:600}}>{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{maxWidth:600,margin:"0 auto",padding:"0 24px 24px",width:"100%"}}>
+          {/* Player name */}
+          <div style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:20,marginBottom:16}}>
+            <label style={{display:"block",color:"#9ca3af",fontSize:12,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Tu nombre (para el ranking)</label>
+            <input
+              value={playerName}
+              onChange={e=>setPlayerName(e.target.value)}
+              placeholder="Tu nombre aquí..."
+              style={{width:"100%",background:"#1a1a2e",border:"1px solid #444",borderRadius:6,padding:"10px 14px",color:"white",fontSize:15,outline:"none",boxSizing:"border-box"}}
+            />
+          </div>
+
+          {[
+            { icon:"⚡",label:"MODO EXAMEN",sub:"20 preguntas aleatorias · Simula el examen real", action:()=>{setConfig({blocks:[],difficulty:[],count:20,mode:"exam"});setScreen("quiz");const q=shuffle(ALL_QUESTIONS).slice(0,20);setQuestions(q);setQIdx(0);setSelected(null);setAnswered(false);setScore(0);setStreak(0);setMaxStreak(0);setWrongIds([]);setAchievements([]);setBlockStats({});setPerfectBlock(false);setReviewMode(false);setStartTime(Date.now());setTimer(0);}, color:"#E85D04" },
+            { icon:"📚",label:"REPASO COMPLETO",sub:"Todas las 200 preguntas en orden aleatorio", action:()=>{const q=shuffle(ALL_QUESTIONS);setQuestions(q);setQIdx(0);setSelected(null);setAnswered(false);setScore(0);setStreak(0);setMaxStreak(0);setWrongIds([]);setAchievements([]);setBlockStats({});setPerfectBlock(false);setReviewMode(false);setStartTime(Date.now());setTimer(0);setScreen("quiz");}, color:"#2D6A4F" },
+            { icon:"⚙️",label:"PERSONALIZADO",sub:"Elige bloques, dificultad y cantidad", action:()=>setScreen("config"), color:"#1A3A5C" },
+            { icon:"🏆",label:"RANKING",sub:"Ver puntuaciones de todos los compañeros", action:()=>setScreen("leaderboard"), color:"#7B2D8B" },
+          ].map(btn=>(
+            <button key={btn.label} onClick={btn.action} style={{width:"100%",background:`linear-gradient(135deg,${btn.color}22,${btn.color}11)`,border:`1px solid ${btn.color}55`,borderRadius:8,padding:"18px 20px",marginBottom:10,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:16,transition:"all 0.2s"}}>
+              <span style={{fontSize:28}}>{btn.icon}</span>
+              <div>
+                <div style={{color:"white",fontWeight:800,fontSize:16,letterSpacing:1}}>{btn.label}</div>
+                <div style={{color:"#9ca3af",fontSize:13,marginTop:2}}>{btn.sub}</div>
+              </div>
+              <span style={{marginLeft:"auto",color:btn.color,fontSize:20}}>→</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── SCREEN: CONFIG ────────────────────────────────────────────────────────────
+  if (screen === "config") {
+    return (
+      <div style={{minHeight:"100vh",background:"#0a0a0f",color:"white",fontFamily:"'Trebuchet MS',sans-serif",padding:24}}>
+        <div style={{maxWidth:650,margin:"0 auto"}}>
+          <button onClick={()=>setScreen("menu")} style={{background:"none",border:"none",color:"#9ca3af",cursor:"pointer",fontSize:14,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>← Volver</button>
+          <h2 style={{fontSize:28,fontWeight:900,textTransform:"uppercase",letterSpacing:-0.5,marginBottom:24}}>Modo <span style={{color:"#E85D04"}}>Personalizado</span></h2>
+
+          {/* Blocks */}
+          <div style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:20,marginBottom:16}}>
+            <div style={{color:"#9ca3af",fontSize:12,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Bloques temáticos <span style={{color:"#666"}}>(vacío = todos)</span></div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+              {BLOCKS.map(b=>{
+                const active=config.blocks.includes(b);
+                return <button key={b} onClick={()=>setConfig(c=>({...c,blocks:active?c.blocks.filter(x=>x!==b):[...c.blocks,b]}))}
+                  style={{background:active?(BLOCK_COLORS[b]||"#E85D04"):"transparent",border:`1px solid ${active?(BLOCK_COLORS[b]||"#E85D04"):"#444"}`,color:active?"white":"#9ca3af",borderRadius:4,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",textTransform:"uppercase",letterSpacing:0.5}}>
+                  {b}</button>;
+              })}
+            </div>
+          </div>
+
+          {/* Difficulty */}
+          <div style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:20,marginBottom:16}}>
+            <div style={{color:"#9ca3af",fontSize:12,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Dificultad <span style={{color:"#666"}}>(vacío = todas)</span></div>
+            <div style={{display:"flex",gap:10}}>
+              {["fácil","medio","difícil"].map(d=>{
+                const active=config.difficulty.includes(d);
+                return <button key={d} onClick={()=>setConfig(c=>({...c,difficulty:active?c.difficulty.filter(x=>x!==d):[...c.difficulty,d]}))}
+                  style={{flex:1,background:active?DIFF_COLORS[d]:"transparent",border:`1px solid ${active?DIFF_COLORS[d]:"#444"}`,color:active?"white":"#9ca3af",borderRadius:6,padding:"10px",fontSize:14,fontWeight:700,cursor:"pointer",textTransform:"uppercase"}}>
+                  {d}</button>;
+              })}
+            </div>
+          </div>
+
+          {/* Count */}
+          <div style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:20,marginBottom:24}}>
+            <div style={{color:"#9ca3af",fontSize:12,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Número de preguntas: <span style={{color:"#E85D04",fontSize:18}}>{config.count}</span></div>
+            <input type="range" min={5} max={200} value={config.count} onChange={e=>setConfig(c=>({...c,count:+e.target.value}))}
+              style={{width:"100%",accentColor:"#E85D04"}} />
+            <div style={{display:"flex",justifyContent:"space-between",color:"#666",fontSize:12,marginTop:4}}>
+              <span>5</span><span>100</span><span>200</span>
+            </div>
+          </div>
+
+          <button onClick={startQuiz} style={{width:"100%",background:"#E85D04",border:"none",borderRadius:8,padding:"16px",color:"white",fontSize:18,fontWeight:900,cursor:"pointer",textTransform:"uppercase",letterSpacing:2}}>
+            ⚡ EMPEZAR
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── SCREEN: LEADERBOARD ───────────────────────────────────────────────────────
+  if (screen === "leaderboard") {
+    return (
+      <div style={{minHeight:"100vh",background:"#0a0a0f",color:"white",fontFamily:"'Trebuchet MS',sans-serif",padding:24}}>
+        <div style={{maxWidth:600,margin:"0 auto"}}>
+          <button onClick={()=>setScreen("menu")} style={{background:"none",border:"none",color:"#9ca3af",cursor:"pointer",fontSize:14,marginBottom:24,display:"flex",alignItems:"center",gap:6}}>← Volver</button>
+          <h2 style={{fontSize:28,fontWeight:900,textTransform:"uppercase",marginBottom:8}}>🏆 <span style={{color:"#E85D04"}}>Ranking</span></h2>
+          <p style={{color:"#666",marginBottom:24,fontSize:14}}>Puntuaciones compartidas con todos tus compañeros</p>
+          {leaderboard.length === 0 ? (
+            <div style={{textAlign:"center",padding:60,color:"#555"}}>
+              <div style={{fontSize:48}}>🏁</div>
+              <div style={{marginTop:16}}>Aún no hay puntuaciones. ¡Sé el primero!</div>
+            </div>
+          ) : leaderboard.map((entry, i) => (
+            <div key={i} style={{background:i===0?"linear-gradient(135deg,#78350f,#92400e)":i===1?"#1a1a2e":i===2?"#1a1a1a":"#111118",border:`1px solid ${i===0?"#f59e0b":i===1?"#94a3b8":i===2?"#cd7c2f":"#333"}`,borderRadius:8,padding:"16px 20px",marginBottom:8,display:"flex",alignItems:"center",gap:16}}>
+              <div style={{width:36,height:36,borderRadius:"50%",background:i===0?"#f59e0b":i===1?"#94a3b8":i===2?"#cd7c2f":"#333",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:i<3?18:14,color:i<3?"white":"#888",flexShrink:0}}>
+                {i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:16}}>{entry.name}</div>
+                <div style={{color:"#9ca3af",fontSize:12}}>{entry.score}/{entry.total} preguntas · {entry.date}</div>
+              </div>
+              <div style={{fontSize:24,fontWeight:900,color:entry.pct>=80?"#22c55e":entry.pct>=60?"#f59e0b":"#ef4444"}}>{entry.pct}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── SCREEN: QUIZ ──────────────────────────────────────────────────────────────
+  if (screen === "quiz" && currentQ) {
+    const blockColor = BLOCK_COLORS[currentQ.block] || "#E85D04";
+    return (
+      <div style={{minHeight:"100vh",background:"#0a0a0f",color:"white",fontFamily:"'Trebuchet MS',sans-serif",display:"flex",flexDirection:"column",position:"relative"}}>
+
+        {/* Achievement toast */}
+        {newAchievement && (
+          <div style={{position:"fixed",top:20,right:20,zIndex:1000,background:"#1a1a2e",border:"2px solid #f59e0b",borderRadius:12,padding:"14px 20px",display:"flex",gap:12,alignItems:"center",maxWidth:300,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",animation:"slideIn 0.3s ease"}}>
+            <style>{`@keyframes slideIn{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
+            <span style={{fontSize:28}}>{newAchievement.icon}</span>
+            <div><div style={{color:"#f59e0b",fontWeight:700,fontSize:13}}>LOGRO DESBLOQUEADO</div><div style={{fontWeight:700}}>{newAchievement.name}</div><div style={{color:"#9ca3af",fontSize:12}}>{newAchievement.desc}</div></div>
+          </div>
+        )}
+
+        {/* Top bar */}
+        <div style={{background:"#111118",borderBottom:"1px solid #222",padding:"10px 16px",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10}}>
+          <button onClick={()=>setScreen("menu")} style={{background:"none",border:"none",color:"#666",cursor:"pointer",fontSize:18,padding:0}}>✕</button>
+          <div style={{flex:1,height:6,background:"#222",borderRadius:3}}>
+            <div style={{height:6,background:`linear-gradient(90deg,${blockColor},#E85D04)`,borderRadius:3,width:`${progress}%`,transition:"width 0.4s"}} />
+          </div>
+          <span style={{color:"#9ca3af",fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>{qIdx+1}/{questions.length}</span>
+          <div style={{display:"flex",gap:10}}>
+            <span style={{background:"#1a2e1a",color:"#22c55e",padding:"3px 8px",borderRadius:4,fontSize:12,fontWeight:700}}>✓ {score}</span>
+            {streak >= 3 && <span style={{background:"#2e1a0a",color:"#f97316",padding:"3px 8px",borderRadius:4,fontSize:12,fontWeight:700}}>🔥{streak}</span>}
+          </div>
+        </div>
+
+        {/* Question */}
+        <div style={{flex:1,padding:"20px 16px",maxWidth:700,margin:"0 auto",width:"100%",boxSizing:"border-box"}}>
+          {/* Meta */}
+          <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+            <span style={{background:blockColor,color:"white",fontSize:10,fontWeight:800,padding:"3px 10px",borderRadius:2,textTransform:"uppercase",letterSpacing:1}}>{currentQ.block}</span>
+            <span style={{background:DIFF_COLORS[currentQ.difficulty]+"33",color:DIFF_COLORS[currentQ.difficulty],fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:2,textTransform:"uppercase"}}>{currentQ.difficulty}</span>
+            <span style={{marginLeft:"auto",color:"#555",fontSize:12}}>⏱ {timer}s</span>
+          </div>
+
+          {/* Question text */}
+          <div style={{background:"#111118",border:"1px solid #222",borderRadius:10,padding:"20px 20px",marginBottom:16}}>
+            <div style={{color:"#9ca3af",fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Pregunta {currentQ.id}</div>
+            <p style={{fontSize:"clamp(16px,3vw,20px)",fontWeight:700,lineHeight:1.5,margin:0}}>{currentQ.q}</p>
+          </div>
+
+          {/* Options */}
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {currentQ.opts.map((opt,idx)=>{
+              const isCorrect = answered && idx === currentQ.a;
+              const isWrong = answered && idx === selected && idx !== currentQ.a;
+              const isSelected = selected === idx;
+              let bg="#111118", border="1px solid #333", color="white";
+              if(isCorrect){bg="#052e16";border="2px solid #22c55e";color="#86efac";}
+              else if(isWrong){bg="#2d0a0a";border="2px solid #ef4444";color="#fca5a5";}
+              else if(isSelected&&!answered){bg="#1a1a2e";border="2px solid #E85D04";}
+              else if(answered){color="#555";}
+              return (
+                <button key={idx} onClick={()=>handleSelect(idx)} style={{background:bg,border,color,borderRadius:8,padding:"14px 16px",textAlign:"left",cursor:answered?"default":"pointer",fontSize:15,display:"flex",gap:14,alignItems:"center",transition:"all 0.15s"}}>
+                  <span style={{width:28,height:28,minWidth:28,borderRadius:4,background:isCorrect?"#22c55e":isWrong?"#ef4444":isSelected&&!answered?"#E85D04":"#222",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:12,color:"white",flexShrink:0}}>
+                    {isCorrect?"✓":isWrong?"✗":["A","B","C","D"][idx]}
+                  </span>
+                  <span>{opt}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Explanation */}
+          {answered && (
+            <div style={{marginTop:16,background:selected===currentQ.a?"#052e16":"#1a0f00",border:`1px solid ${selected===currentQ.a?"#22c55e55":"#f59e0b55"}`,borderRadius:8,padding:16}}>
+              <div style={{fontWeight:700,color:selected===currentQ.a?"#22c55e":"#f59e0b",fontSize:13,marginBottom:6}}>
+                {selected===currentQ.a?"✅ ¡Correcto!":"📖 Explicación"}
+              </div>
+              <p style={{color:"#d1d5db",fontSize:14,lineHeight:1.7,margin:0}}>{currentQ.exp}</p>
+            </div>
+          )}
+
+          {answered && (
+            <button onClick={handleNext} style={{width:"100%",marginTop:16,background:"#E85D04",border:"none",borderRadius:8,padding:"14px",color:"white",fontSize:16,fontWeight:900,cursor:"pointer",textTransform:"uppercase",letterSpacing:2}}>
+              {qIdx<questions.length-1?"Siguiente →":"Ver Resultados 🏆"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── SCREEN: RESULTS ──────────────────────────────────────────────────────────
+  if (screen === "results") {
+    const mins = Math.floor(totalTime/60), secs = totalTime%60;
+    const grade = pct>=90?"SOBRESALIENTE":pct>=70?"APROBADO":pct>=50?"SUSPENSO":"SUSPENSO";
+    const gradeColor = pct>=90?"#22c55e":pct>=70?"#86efac":pct>=50?"#f59e0b":"#ef4444";
+    return (
+      <div style={{minHeight:"100vh",background:"#0a0a0f",color:"white",fontFamily:"'Trebuchet MS',sans-serif",padding:"24px 16px"}}>
+        <div style={{maxWidth:600,margin:"0 auto"}}>
+          {/* Hero result */}
+          <div style={{textAlign:"center",padding:"32px 0",background:"linear-gradient(135deg,#111118,#1a1a2e)",borderRadius:12,border:"1px solid #333",marginBottom:20}}>
+            <div style={{fontSize:64,marginBottom:8}}>{pct>=70?"🏆":"📚"}</div>
+            <div style={{fontSize:"clamp(48px,10vw,80px)",fontWeight:900,color:gradeColor,lineHeight:1}}>{pct}%</div>
+            <div style={{fontSize:18,fontWeight:700,color:gradeColor,marginTop:4,letterSpacing:2,textTransform:"uppercase"}}>{grade}</div>
+            <div style={{color:"#9ca3af",marginTop:8,fontSize:14}}>{score}/{questions.length} correctas · {mins}m {secs}s · Racha máx: {maxStreak}🔥</div>
+          </div>
+
+          {/* Save score */}
+          {!nameSaved && (
+            <div style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:16,marginBottom:16}}>
+              <div style={{color:"#f59e0b",fontWeight:700,marginBottom:8}}>💾 Guardar en el ranking</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={playerName} onChange={e=>setPlayerName(e.target.value)} placeholder="Tu nombre..."
+                  style={{flex:1,background:"#1a1a2e",border:"1px solid #444",borderRadius:6,padding:"10px 12px",color:"white",fontSize:14,outline:"none"}} />
+                <button onClick={()=>{if(playerName){saveScore(playerName,score,questions.length);setNameSaved(true);getLeaderboard().then(setLeaderboard);}}}
+                  style={{background:"#E85D04",border:"none",borderRadius:6,padding:"10px 20px",color:"white",fontWeight:700,cursor:"pointer"}}>Guardar</button>
+              </div>
+            </div>
+          )}
+
+          {/* Block stats */}
+          <div style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:16,marginBottom:16}}>
+            <div style={{color:"#9ca3af",fontSize:12,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Resultados por bloque</div>
+            {Object.entries(blockStats).map(([block,stat])=>{
+              const bpct = Math.round((stat.correct/stat.total)*100);
+              return (
+                <div key={block} style={{marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                    <span style={{fontSize:12,color:"#d1d5db"}}>{block}</span>
+                    <span style={{fontSize:12,fontWeight:700,color:bpct>=70?"#22c55e":bpct>=50?"#f59e0b":"#ef4444"}}>{stat.correct}/{stat.total}</span>
+                  </div>
+                  <div style={{height:4,background:"#222",borderRadius:2}}>
+                    <div style={{height:4,background:BLOCK_COLORS[block]||"#E85D04",borderRadius:2,width:`${bpct}%`}} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Achievements */}
+          {achievements.length > 0 && (
+            <div style={{background:"#111118",border:"1px solid #f59e0b44",borderRadius:8,padding:16,marginBottom:16}}>
+              <div style={{color:"#f59e0b",fontSize:12,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>🏅 Logros conseguidos</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {achievements.map(a=>(
+                  <div key={a.id} style={{background:"#1a1500",border:"1px solid #f59e0b44",borderRadius:6,padding:"8px 12px",display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:20}}>{a.icon}</span>
+                    <div><div style={{fontWeight:700,fontSize:12,color:"#f59e0b"}}>{a.name}</div><div style={{fontSize:11,color:"#9ca3af"}}>{a.desc}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {wrongIds.length > 0 && (
+              <button onClick={startReview} style={{background:"linear-gradient(135deg,#7c2d12,#92400e)",border:"1px solid #c2410c",borderRadius:8,padding:"14px",color:"white",fontSize:15,fontWeight:800,cursor:"pointer",letterSpacing:1}}>
+                🔁 Repasar {wrongIds.length} errores
+              </button>
+            )}
+            <button onClick={()=>{setQuestions(shuffle(questions));setQIdx(0);setSelected(null);setAnswered(false);setScore(0);setStreak(0);setMaxStreak(0);setWrongIds([]);setAchievements([]);setBlockStats({});setStartTime(Date.now());setTimer(0);setScreen("quiz");}}
+              style={{background:"#1a3a5c",border:"1px solid #2563eb44",borderRadius:8,padding:"14px",color:"white",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+              🔄 Repetir (mismo set)
+            </button>
+            <button onClick={()=>{setScreen("menu");setNameSaved(false);}} style={{background:"#111118",border:"1px solid #333",borderRadius:8,padding:"14px",color:"#9ca3af",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+              🏠 Menú principal
+            </button>
+            <button onClick={()=>setScreen("leaderboard")} style={{background:"#111118",border:"1px solid #f59e0b44",borderRadius:8,padding:"14px",color:"#f59e0b",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+              🏆 Ver ranking
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
